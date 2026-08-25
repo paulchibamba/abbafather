@@ -26,6 +26,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import io.abbafather.core.designsystem.theme.AbbaTheme
 import io.abbafather.feature.home.HomeRoute
+import io.abbafather.feature.library.LibraryRoute
 
 /**
  * The whole app hangs here: one host, four tabs that keep their own back stacks, and three
@@ -81,13 +82,8 @@ fun NavGraphBuilder.abbaDestinations(navController: NavHostController) {
         )
     }
     composable<AbbaRoute.Library> {
-        PlaceholderScreen(
-            title = "Library",
-            actions = listOf(
-                PlaceholderAction("Open a reader") {
-                    navController.navigate(AbbaRoute.Reader(SamplePrayerId))
-                },
-            ),
+        LibraryRoute(
+            onOpenReader = { prayerId -> navController.navigate(AbbaRoute.Reader(prayerId)) },
         )
     }
     composable<AbbaRoute.MyPrayers> {
@@ -159,5 +155,4 @@ fun NavDestination?.toTopLevelDestination(): TopLevelDestination? {
     return TopLevelDestination.entries.firstOrNull { destination.hasRoute(it.route::class) }
 }
 
-private const val SamplePrayerId = "bcp-collect-for-peace"
 private const val SampleSeedText = "Be thou my vision, O Lord of my heart."

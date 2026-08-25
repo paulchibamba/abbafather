@@ -15,4 +15,27 @@
     <string name="home_read_it">Read it first</string>
     <string name="home_recently_prayed">Recently prayed</string>
     <string name="home_open_prayer">Open</string>
+
+    <string name="library_title">Library</string>
+    <string name="library_search_hint">Search prayers, words, authors</string>
+    <string name="library_occasions">Occasions</string>
+    <string name="library_collections">Collections</string>
+    <string name="library_themes">Themes</string>
+    <string name="library_all_prayers">All prayers</string>
+    <string name="library_clear">Clear</string>
+    <string name="library_nothing_found">Nothing here matches. Try fewer words, or clear the chips.</string>
+    <string name="library_open_prayer">Open</string>
+
+    <plurals name="library_subtitle">
+        <item quantity="one">%1$d prayer to read, to pray, to keep.</item>
+        <item quantity="other">%1$d prayers to read, to pray, to keep.</item>
+    </plurals>
+    <plurals name="library_tile_prayer_count">
+        <item quantity="one">%1$d prayer</item>
+        <item quantity="other">%1$d prayers</item>
+    </plurals>
+    <plurals name="library_matching_prayers">
+        <item quantity="one">%1$d prayer</item>
+        <item quantity="other">%1$d prayers</item>
+    </plurals>
 </resources>

@@ -20,7 +20,7 @@ you love; write your own prayers. No accounts, no network, no notifications.
 | 3 | Domain + data — models, Room, seeding, repositories, use cases | `feat/03-domain-and-data` | merged, `task-03` |
 | 4 | App shell — navigation graph, pill bottom bar | `feat/04-app-shell-navigation` | merged, `task-04` |
 | 5 | Home screen | `feat/05-home-screen` | merged, `task-05` |
-| 6 | Library screen | `feat/06-library-screen` | not started |
+| 6 | Library screen | `feat/06-library-screen` | built, awaiting approval |
 | 7 | Reader + keep-a-line bottom sheet | `feat/07-reader-and-keep-line-sheet` | not started |
 | 8 | Prayer session | `feat/08-prayer-session` | not started |
 | 9 | Saved screen | `feat/09-saved-screen` | not started |
@@ -30,6 +30,38 @@ you love; write your own prayers. No accounts, no network, no notifications.
 
 Each task is built on its own branch, verified, then **stopped for approval**. Only after approval:
 `git switch main && git merge --no-ff <branch> && git tag task-<nn>`.
+
+## Task 6 — built, awaiting approval
+
+The shelf. `Library` is no longer a placeholder.
+
+- `feature/library/LibraryUiState.kt` — `LibraryUiState` (query, `PrayerFilter`, `KindTile` /
+  `GroupTile` / `ThemeChip` lists, the narrowed `prayers`, `isCatalogueReady`, `isNarrowed`) and
+  `LibraryAction` (`SearchQueryChanged`, `ToggleKind`, `ToggleGroup`, `ToggleTheme`, `ClearNarrowing`,
+  `OpenPrayer`).
+- `feature/library/LibraryViewModel.kt` — query and the three chip sets live in `SavedStateHandle`
+  (each selection stored as its enum names joined by a comma, a type the handle can always write).
+  They are folded into one `LibraryNarrowing`, and `SearchPrayersUseCase` and `FilterPrayersUseCase`
+  are read inside a `flatMapLatest` over it, so one change produces exactly one state. `OpenPrayer`
+  stamps `lastOpenedAt` through `RecordPrayerOpenedUseCase`, as Home does.
+- `feature/library/LibraryScreen.kt` — `LibraryScreen` (stateless, previewed) and `LibraryRoute`.
+  38sp title, the prayer count, the 52h pill search field, "Occasions" as eight 24-radius tiles two to
+  a row, "Collections" as the seven groups in the card/tint/card/clay cycle, "Themes" as a `FlowRow` of
+  `SelectableChip`s, then the results label with a "Clear" action and the 22-radius prayer rows.
+  Selected tiles fill sage; the empty result says so rather than showing nothing.
+- The search field holds a `TextFieldState` rather than being driven keystroke by keystroke from the
+  ViewModel — see `docs/DECISIONS.md`, it fixed letters arriving out of order on a real phone.
+- `AbbaNavHost` now shows `LibraryRoute`; the Library placeholder and its sample-id navigation are gone.
+- Twelve Library strings added to `strings.xml`, three of them plurals.
+- **Tests**: 72 passing (10 new). `LibraryViewModelTest` covers the unnarrowed shelf, tile counts
+  staying with the whole catalogue, search over title / author / line, search and chips narrowing
+  together, two chips of one kind widening rather than emptying, a chip tapped twice, `ClearNarrowing`,
+  an empty result, the query and chips surviving a rotation (a second ViewModel over the same handle),
+  and an open being stamped.
+- Verified: `:app:assembleDebug` and `:app:testDebugUnitTest` pass, and on a Galaxy Note 10+ — the
+  screen matches `docs/DESIGN_SYSTEM.md`, "mercy" typed into the field survives two rotations and
+  narrows to nine prayers, the scroll offset and the query both come back after a tab switch, "Clear"
+  empties the field, and a row reaches the Reader with `prayerId = psalm-023`.
 
 ## Task 5 — done and merged
 
@@ -153,17 +185,19 @@ The UI is still the untouched template "Hello Android" screen. That is expected 
 
 ## Start here for the next task
 
-### Task 6 — `feat/06-library-screen`
+### Task 7 — `feat/07-reader-and-keep-line-sheet`
 
 ```
-git switch -c feat/06-library-screen main
+git switch -c feat/07-reader-and-keep-line-sheet main
 ```
 
-The Library, replacing its placeholder: the 38sp screen title, the pill search field, the kind tiles
-and collection tiles, and the prayer rows, over `SearchPrayersUseCase` and `FilterPrayersUseCase`.
-`LibraryUiState`, `LibraryAction`, `LibraryViewModel`, `LibraryScreen`, `LibraryRoute` per the UI
-pattern in `CLAUDE.md`. The search query and the selected filters belong in `SavedStateHandle`.
+The Reader, replacing its placeholder: the 44h round back button, the 36sp title and its byline, the
+prayer set line by line at 23/1.6 with each line its own 14-radius tap target, the tinted "Pray this"
+pill, and the three-stage keep-a-line bottom sheet over `SaveLineUseCase` and
+`CreatePersonalPrayerFromLineUseCase`. `ReaderUiState`, `ReaderAction`, `ReaderViewModel`,
+`ReaderScreen`, `ReaderRoute` per the UI pattern in `CLAUDE.md`; `prayerId` comes from the route
+through `SavedStateHandle`, and the line the sheet is open on belongs there too.
 
-**Done when** `:app:assembleDebug` and `:app:testDebugUnitTest` pass, the screen matches
-`docs/DESIGN_SYSTEM.md`, a search survives a rotation, the scroll offset still comes back after a tab
-switch, and a row reaches the Reader with the right `prayerId`.
+**Done when** `:app:assembleDebug` and `:app:testDebugUnitTest` pass, the screen and the sheet match
+`docs/DESIGN_SYSTEM.md`, a kept line reaches the `saved_lines` table, the open sheet survives a
+rotation, and "Pray this" reaches the Session with the right `prayerId`.
