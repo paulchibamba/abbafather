@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Abba, Father</string>
+
+    <string name="nav_home">Home</string>
+    <string name="nav_library">Library</string>
+    <string name="nav_my_prayers">My prayers</string>
+    <string name="nav_saved">Saved</string>
 </resources>
