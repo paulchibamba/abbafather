@@ -113,3 +113,21 @@ composition. `androidx.navigation:navigation-testing` was added for that alone.
 lets the prayer session paint the deep forest edge to edge and own the system bars, and it means no
 screen has to know whether it is being shown with a bottom bar. The session's status-bar *appearance*
 — light icons over the forest — belongs to task 8, which owns that screen's `DisposableEffect`.
+
+## 2026-08-25 — The daily verse lives in the domain, not in Room
+`DailyVerses` is a plain Kotlin list beside `GetTodaysVerseUseCase`. Room is the source of truth for
+content the reader can change or that the catalogue owns; the home verse is neither — it is thirty-one
+fixed lines of the Authorized Version the app ships with and nobody edits. Putting them in a table
+would have meant a schema version bump and a migration for text that cannot drift. It is picked by
+`date.toEpochDay()` the same way today's prayer is, so the header holds still across a rotation.
+
+## 2026-08-25 — Home records the open, the header takes the status bar
+Both home actions — "Begin prayer" and "Read it first" — go through `HomeViewModel.onAction`, which
+stamps `lastOpenedAt` before the navigator moves. The recent rows are therefore the prayers the reader
+actually reached for, whichever way they reached. Today's prayer is filtered out of those rows: it
+already has a card of its own directly above them, so a row repeating it would read as noise.
+
+The home header is the one screen element that paints under the status bar: the root column takes the
+horizontal and bottom `safeDrawing` insets and the header takes the top inset *inside* its own tinted
+field, so the sage tint reaches the top of the display instead of stopping at a bar-height strip of
+oat. Every other screen keeps padding itself whole.
