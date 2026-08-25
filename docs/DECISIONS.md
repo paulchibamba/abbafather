@@ -92,3 +92,24 @@ his published work and the prayer is attributed **"After John Bunyan"** rather t
 design source turns up with the original text, replace the lines in `prayer_catalogue.json` and
 restore the plain attribution. Every other prayer in the catalogue is a public-domain text carried
 verbatim (KJV, BCP 1662, Luther's Small Catechism) or a public-domain translation.
+
+## 2026-08-25 — Only the selected tab names itself
+The design specifies a pill bottom bar with a sage active pill, an 11sp uppercase nav label and a
+54h pill, but four labels on the bar at once would have crowded a 411dp width and made the bar the
+loudest thing on an otherwise quiet screen. `AbbaBottomBar` therefore draws the three unselected tabs
+as their icon alone and gives the label only to the selected pill, which is what the sage pill is
+sized for. The unselected icons carry the label as their content description, so nothing is lost to a
+screen reader.
+
+## 2026-08-25 — The graph is a function, not a lambda buried in the host
+`abbaDestinations(navController)` is a `NavGraphBuilder` extension rather than an anonymous builder
+inside `AbbaNavHost`, so `AbbaNavGraphTest` can build the same graph against a `TestNavHostController`
+and assert reachability, argument round-tripping and tab back-stack behaviour without standing up a
+composition. `androidx.navigation:navigation-testing` was added for that alone.
+
+## 2026-08-25 — The shell hands the whole window to the nav host
+`MainActivity` applies no inset padding and the `Scaffold` in `AbbaNavHost` sets
+`contentWindowInsets = WindowInsets(0.dp)`; each screen pads itself with `safeDrawing`. That is what
+lets the prayer session paint the deep forest edge to edge and own the system bars, and it means no
+screen has to know whether it is being shown with a bottom bar. The session's status-bar *appearance*
+— light icons over the forest — belongs to task 8, which owns that screen's `DisposableEffect`.
