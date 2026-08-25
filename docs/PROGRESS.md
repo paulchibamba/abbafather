@@ -17,7 +17,7 @@ you love; write your own prayers. No accounts, no network, no notifications.
 |---|---|---|---|
 | 1 | Project foundation — git, build wiring, Hilt root, docs | `chore/01-project-foundation` | merged, `task-01` |
 | 2 | Design system — fonts, colours, type, shared components | `feat/02-design-system` | merged, `task-02` |
-| 3 | Domain + data — models, Room, seeding, repositories, use cases | `feat/03-domain-and-data` | **awaiting approval** |
+| 3 | Domain + data — models, Room, seeding, repositories, use cases | `feat/03-domain-and-data` | merged, `task-03` |
 | 4 | App shell — navigation graph, pill bottom bar | `feat/04-app-shell-navigation` | not started |
 | 5 | Home screen | `feat/05-home-screen` | not started |
 | 6 | Library screen | `feat/06-library-screen` | not started |
@@ -31,7 +31,7 @@ you love; write your own prayers. No accounts, no network, no notifications.
 Each task is built on its own branch, verified, then **stopped for approval**. Only after approval:
 `git switch main && git merge --no-ff <branch> && git tag task-<nn>`.
 
-## Task 3 — done in this branch
+## Task 3 — done and merged
 
 Everything below the UI. The visible app is still the design-system gallery, as planned.
 
