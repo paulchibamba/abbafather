@@ -20,7 +20,7 @@ you love; write your own prayers. No accounts, no network, no notifications.
 | 3 | Domain + data — models, Room, seeding, repositories, use cases | `feat/03-domain-and-data` | merged, `task-03` |
 | 4 | App shell — navigation graph, pill bottom bar | `feat/04-app-shell-navigation` | merged, `task-04` |
 | 5 | Home screen | `feat/05-home-screen` | merged, `task-05` |
-| 6 | Library screen | `feat/06-library-screen` | built, awaiting approval |
+| 6 | Library screen | `feat/06-library-screen` | merged, `task-06` |
 | 7 | Reader + keep-a-line bottom sheet | `feat/07-reader-and-keep-line-sheet` | not started |
 | 8 | Prayer session | `feat/08-prayer-session` | not started |
 | 9 | Saved screen | `feat/09-saved-screen` | not started |
@@ -31,7 +31,7 @@ you love; write your own prayers. No accounts, no network, no notifications.
 Each task is built on its own branch, verified, then **stopped for approval**. Only after approval:
 `git switch main && git merge --no-ff <branch> && git tag task-<nn>`.
 
-## Task 6 — built, awaiting approval
+## Task 6 — done and merged
 
 The shelf. `Library` is no longer a placeholder.
 
