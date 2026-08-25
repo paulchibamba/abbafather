@@ -140,3 +140,28 @@ and the sage home header, illegible on both. `MainActivity` now passes
 look and no dark variant, so the bars should not be reading a setting the rest of the app ignores.
 Found on a Galaxy Note 10+ (API 31) in dark mode; the emulator defaults to light and never showed it.
 The prayer session inverts this for its own screen in task 8.
+
+## 2026-08-25 — "Collections" on the Library are the catalogue's groups
+The design's collection tiles show `PrayerGroup` — Book of Common Prayer, Psalms, Puritan, Celtic —
+not reader-made `PrayerCollection`s. Nothing in the app creates a collection yet, so tiles over
+`observeCollections()` would have been an empty shelf on every device, and the group is the honest
+answer to "where is this prayer from". The four-colour tile cycle (card, `sageTint`, card, `clay`)
+carries on past the fourth tile so no two neighbours share a colour. Reader-made collections, when
+they arrive, get their own block rather than displacing this one.
+
+## 2026-08-25 — The search field owns its text, the ViewModel hears about it
+`LibraryViewModel` keeps the query in `SavedStateHandle`, so it survives a rotation and process
+death. Driving `BasicTextField(value =, onValueChange =)` from that `StateFlow` proved to be a real
+bug, not a theoretical one: on a Galaxy Note 10+ typing "mercy" into the field produced "meyyc",
+because every keystroke round-trips through the handle and comes back a frame late. The field now
+holds a `TextFieldState` and edits at once, reports to the ViewModel afterwards, and takes the query
+back only when it differs — which is what makes "Clear" empty the field. Any future text field on
+this app follows the same shape.
+
+## 2026-08-25 — One narrowing, one state
+`SearchPrayersUseCase` and `FilterPrayersUseCase` each read the catalogue, so combining them flatly
+beside the query emitted half-updated frames — the new query beside the old shelf. The query and the
+chips are folded into one `LibraryNarrowing` first, and the catalogue is read inside a
+`flatMapLatest` over it, so one change of either produces exactly one `LibraryUiState`. The tile
+counts are taken from the whole catalogue rather than the narrowed list, so a count never moves under
+the finger that is narrowing with it.
