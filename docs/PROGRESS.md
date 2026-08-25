@@ -18,7 +18,7 @@ you love; write your own prayers. No accounts, no network, no notifications.
 | 1 | Project foundation — git, build wiring, Hilt root, docs | `chore/01-project-foundation` | merged, `task-01` |
 | 2 | Design system — fonts, colours, type, shared components | `feat/02-design-system` | merged, `task-02` |
 | 3 | Domain + data — models, Room, seeding, repositories, use cases | `feat/03-domain-and-data` | merged, `task-03` |
-| 4 | App shell — navigation graph, pill bottom bar | `feat/04-app-shell-navigation` | built, awaiting approval |
+| 4 | App shell — navigation graph, pill bottom bar | `feat/04-app-shell-navigation` | merged, `task-04` |
 | 5 | Home screen | `feat/05-home-screen` | not started |
 | 6 | Library screen | `feat/06-library-screen` | not started |
 | 7 | Reader + keep-a-line bottom sheet | `feat/07-reader-and-keep-line-sheet` | not started |
@@ -31,7 +31,7 @@ you love; write your own prayers. No accounts, no network, no notifications.
 Each task is built on its own branch, verified, then **stopped for approval**. Only after approval:
 `git switch main && git merge --no-ff <branch> && git tag task-<nn>`.
 
-## Task 4 — built, awaiting approval
+## Task 4 — done and merged
 
 The shell. Every destination is still a placeholder; what is real is the graph, the arguments and the
 bar.
