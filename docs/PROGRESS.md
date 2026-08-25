@@ -21,7 +21,7 @@ you love; write your own prayers. No accounts, no network, no notifications.
 | 4 | App shell — navigation graph, pill bottom bar | `feat/04-app-shell-navigation` | merged, `task-04` |
 | 5 | Home screen | `feat/05-home-screen` | merged, `task-05` |
 | 6 | Library screen | `feat/06-library-screen` | merged, `task-06` |
-| 7 | Reader + keep-a-line bottom sheet | `feat/07-reader-and-keep-line-sheet` | not started |
+| 7 | Reader + keep-a-line bottom sheet | `feat/07-reader-and-keep-line-sheet` | built, awaiting approval |
 | 8 | Prayer session | `feat/08-prayer-session` | not started |
 | 9 | Saved screen | `feat/09-saved-screen` | not started |
 | 10 | My prayers screen | `feat/10-my-prayers-screen` | not started |
@@ -30,6 +30,41 @@ you love; write your own prayers. No accounts, no network, no notifications.
 
 Each task is built on its own branch, verified, then **stopped for approval**. Only after approval:
 `git switch main && git merge --no-ff <branch> && git tag task-<nn>`.
+
+## Task 7 — built, awaiting approval
+
+The prayer read whole, and the sheet that keeps a line of it.
+
+- `feature/reader/ReaderUiState.kt` — `ReaderUiState` (the prayer, `keptLineIndices`, a nullable
+  `keepSheet`), `KeepLineSheetUiState` + `KeepLineStage` (`Keep` / `Kept` / `AlreadyKept`),
+  `ReaderAction` (`Back`, `PrayThis`, `SelectLine`, `DismissSheet`, `ToggleTheme`, `KeepLine`,
+  `ReleaseKeptLine`, `GrowIntoPrayer`) and `ReaderEvent`.
+- `feature/reader/ReaderViewModel.kt` — `prayerId` comes from `SavedStateHandle` by the route's own
+  argument name; the open line, the stage and the ticked themes live there too, so the sheet survives
+  a rotation on the same line. Keeping goes through `SaveLineUseCase`, letting go through
+  `deleteSavedLine` with the injected `Clock`, and "Make it my prayer" through
+  `CreatePersonalPrayerFromLineUseCase` — which mints the draft before there is an id to navigate to,
+  so that one move arrives as a `ReaderEvent` rather than from the action.
+- `feature/reader/ReaderScreen.kt` — `ReaderScreen` (stateless, previewed) and `ReaderRoute`. 44h
+  round back button, 36sp title and byline, the prayer line by line at 23/1.6 with each line its own
+  14-radius tap target reaching 12dp into the margin, a moss rule where the session will breathe, the
+  tinted 64h "Pray this" and the tap-a-line hint. The sheet is a `ModalBottomSheet` over the design's
+  `ink @ .4` scrim with a 36-radius top, an `ink @ .2` handle, the line at 24/1.5, the theme chips and
+  the stage's own buttons.
+- A kept line keeps its sage tint in the reader — see `docs/DECISIONS.md`.
+- `AbbaNavHost` now shows `ReaderRoute`; the Reader placeholder is gone.
+- Eleven reader strings added to `strings.xml`.
+- **Tests**: 80 passing (8 new). `ReaderViewModelTest` covers the prayer arriving whole, a tap opening
+  the sheet ticked with the prayer's themes, keeping writing the line whole (text, source, index,
+  themes, timestamp) and moving the sheet on, a line kept earlier opening as `AlreadyKept`, letting go
+  removing it and closing the sheet, growing a line writing the draft and asking for the compose
+  screen, the sheet surviving a rotation, and leaving keeping nothing.
+- Verified: `:app:assembleDebug` and `:app:testDebugUnitTest` pass, and on a Pixel 8 emulator (API 33)
+  — the screen and all three sheet stages match `docs/DESIGN_SYSTEM.md`, the sheet survives a rotation
+  on the same line with the same chips, a kept line reads back as kept after leaving the screen,
+  "Make it my prayer" reaches Compose with a real `personalPrayerId`, and "Pray this" reaches the
+  Session with `prayerId = calvin-grant-almighty-god`. The phone was out of storage
+  (`INSTALL_FAILED_INSUFFICIENT_STORAGE`), so this task was verified on the emulator alone.
 
 ## Task 6 — done and merged
 
@@ -185,19 +220,23 @@ The UI is still the untouched template "Hello Android" screen. That is expected 
 
 ## Start here for the next task
 
-### Task 7 — `feat/07-reader-and-keep-line-sheet`
+### Task 8 — `feat/08-prayer-session`
 
 ```
-git switch -c feat/07-reader-and-keep-line-sheet main
+git switch -c feat/08-prayer-session main
 ```
 
-The Reader, replacing its placeholder: the 44h round back button, the 36sp title and its byline, the
-prayer set line by line at 23/1.6 with each line its own 14-radius tap target, the tinted "Pray this"
-pill, and the three-stage keep-a-line bottom sheet over `SaveLineUseCase` and
-`CreatePersonalPrayerFromLineUseCase`. `ReaderUiState`, `ReaderAction`, `ReaderViewModel`,
-`ReaderScreen`, `ReaderRoute` per the UI pattern in `CLAUDE.md`; `prayerId` comes from the route
-through `SavedStateHandle`, and the line the sheet is open on belongs there too.
+The session, replacing its placeholder: the full-bleed deep-forest screen, the prayer one line at a
+time at 30/1.42 with earlier lines fading to `oat @ .38`, the breathing pause after
+`breathingPauseAfterLine`, the moss progress ticks, the blurred sage orb breathing on the `glow`
+timing, the translucent controls and the oat "Amen". `SessionUiState`, `SessionAction`,
+`SessionViewModel`, `SessionScreen`, `SessionRoute` per the UI pattern in `CLAUDE.md`; the current
+line index lives in `SavedStateHandle`. Pacing comes from `SettingsRepository`
+(`PrayerSettings.SessionPacing`). The screen owns its system bars: keep-screen-on and **light bar
+icons on the dark ground**, both released in `DisposableEffect.onDispose` — this is the fix task 4
+noted for its dark-on-dark status bar.
 
-**Done when** `:app:assembleDebug` and `:app:testDebugUnitTest` pass, the screen and the sheet match
-`docs/DESIGN_SYSTEM.md`, a kept line reaches the `saved_lines` table, the open sheet survives a
-rotation, and "Pray this" reaches the Session with the right `prayerId`.
+**Done when** `:app:assembleDebug` and `:app:testDebugUnitTest` pass, the session matches
+`docs/DESIGN_SYSTEM.md`, the line index survives a rotation, the screen stays awake while it is open
+and stops when it is left, the status-bar icons are light on the forest and dark again afterwards,
+and "Amen" pops back to the screen the session was opened from.
