@@ -33,3 +33,21 @@ schema rewrite.
 ## 2026-08-25 — Fakes over mocks
 Test doubles are hand-written fakes of the domain repository interfaces. No mocking framework is a
 dependency; the interfaces are small enough that fakes are clearer and survive refactors better.
+
+## 2026-08-25 — Variable fonts, bundled rather than downloadable
+Cormorant Garamond and Work Sans ship as single variable TTFs in `res/font` with weights requested as
+`FontVariation` axis positions. One file per family instead of seven static weights, and the app
+renders identically with no Play Services font provider and no network. Axis ranges were checked
+before choosing weights: Cormorant Garamond is 300..700, Work Sans 100..900. The OFL licence text for
+both families is in `assets/licenses/` for a future About screen.
+
+## 2026-08-25 — Colour shift instead of ripple
+Every tappable surface uses `Modifier.pressableSurface`, which animates the container colour and
+passes `indication = null`. The design expresses press state as a warmer field (`card` → `cardPressed`,
+`sage` → `sagePressed`); a Material ripple on top of that would read as a second, louder answer to the
+same tap.
+
+## 2026-08-25 — Type named by voice, not by Material slot
+`AbbaTypeScale` names styles `prayerLine`, `homeVerse`, `sectionLabel` and so on, because the design's
+scale is driven by who is speaking rather than by a heading hierarchy. A Material `Typography` is still
+derived from it so Material components inherit the right faces.
