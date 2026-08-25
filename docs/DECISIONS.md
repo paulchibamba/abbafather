@@ -165,3 +165,35 @@ chips are folded into one `LibraryNarrowing` first, and the catalogue is read in
 `flatMapLatest` over it, so one change of either produces exactly one `LibraryUiState`. The tile
 counts are taken from the whole catalogue rather than the narrowed list, so a count never moves under
 the finger that is narrowing with it.
+
+## 2026-08-25 — The keep-a-line sheet says three things, not three sheets
+The design names a "three-stage" sheet without naming the stages. They are `Keep` (a line just
+tapped: tag it and keep it), `Kept` (this moment kept — grow it or be done) and `AlreadyKept` (kept
+on an earlier reading — grow it, or let it go). Tapping a line the reader kept last week therefore
+never offers to keep it again. All three share the handle and the line at the top of the same sheet,
+so it reads as one place the reader stays in rather than three fields replacing each other.
+
+A kept line keeps its `sageTint` field in the reader permanently, which is the same token the design
+gives the selected line. That is deliberate: what the tint means is "this line is yours", and the
+open line is the line the sheet is about to make yours.
+
+## 2026-08-25 — The Reader reads its argument by key, not by route type
+`ReaderViewModel` takes `prayerId` out of `SavedStateHandle` by the name the argument is declared
+with on `AbbaRoute.Reader`, rather than calling `toRoute<AbbaRoute.Reader>()`. `navigation/` already
+depends on `feature/`; having the feature reach back for the route type would close that loop, and
+`CLAUDE.md` keeps features pointed at `domain/` and `core/` alone. The graph test already pins that
+the argument round-trips under that name.
+
+## 2026-08-25 — One-shot navigation arrives as an event
+Every other screen so far navigates straight from the action, because the destination is known when
+the tap happens. "Make it my prayer" is not: `CreatePersonalPrayerFromLineUseCase` mints the draft
+first, and only then is there a `personalPrayerId` to open. `ReaderViewModel` therefore exposes a
+`Channel`-backed `events: Flow<ReaderEvent>` beside its `StateFlow`, collected once in `ReaderRoute`.
+State stays state; a move that happens once stays a one-shot. Any later screen with the same shape
+follows this rather than smuggling a navigation request into `UiState`.
+
+## 2026-08-25 — The document margin is per block, not on the root
+The Reader pads its sides block by block rather than once on the root column, because a prayer line's
+tinted hit area has to reach 12dp past the text into the margin while the text itself stays on the
+26dp document margin. Compose has no negative padding, so the body column is padded by the difference
+(14dp) and each line adds the remaining 12dp inside its own field.
