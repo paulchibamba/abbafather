@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Room exports its schema here and it is committed deliberately — do not ignore it.
+!/app/schemas
