@@ -131,3 +131,12 @@ The home header is the one screen element that paints under the status bar: the 
 horizontal and bottom `safeDrawing` insets and the header takes the top inset *inside* its own tinted
 field, so the sage tint reaches the top of the display instead of stopping at a bar-height strip of
 oat. Every other screen keeps padding itself whole.
+
+## 2026-08-25 — The system bars are told the app is light, not asked
+`enableEdgeToEdge()` with no arguments uses `SystemBarStyle.auto`, which follows the *system's*
+dark-theme setting — so on a phone set to dark it painted white status-bar icons over the oat ground
+and the sage home header, illegible on both. `MainActivity` now passes
+`SystemBarStyle.light(TRANSPARENT, TRANSPARENT)` for both bars. `AbbaTheme` has one committed light
+look and no dark variant, so the bars should not be reading a setting the rest of the app ignores.
+Found on a Galaxy Note 10+ (API 31) in dark mode; the emulator defaults to light and never showed it.
+The prayer session inverts this for its own screen in task 8.
