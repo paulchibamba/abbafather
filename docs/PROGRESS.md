@@ -19,7 +19,7 @@ you love; write your own prayers. No accounts, no network, no notifications.
 | 2 | Design system — fonts, colours, type, shared components | `feat/02-design-system` | merged, `task-02` |
 | 3 | Domain + data — models, Room, seeding, repositories, use cases | `feat/03-domain-and-data` | merged, `task-03` |
 | 4 | App shell — navigation graph, pill bottom bar | `feat/04-app-shell-navigation` | merged, `task-04` |
-| 5 | Home screen | `feat/05-home-screen` | not started |
+| 5 | Home screen | `feat/05-home-screen` | built, awaiting approval |
 | 6 | Library screen | `feat/06-library-screen` | not started |
 | 7 | Reader + keep-a-line bottom sheet | `feat/07-reader-and-keep-line-sheet` | not started |
 | 8 | Prayer session | `feat/08-prayer-session` | not started |
@@ -30,6 +30,36 @@ you love; write your own prayers. No accounts, no network, no notifications.
 
 Each task is built on its own branch, verified, then **stopped for approval**. Only after approval:
 `git switch main && git merge --no-ff <branch> && git tag task-<nn>`.
+
+## Task 5 — built, awaiting approval
+
+The first real screen. `Home` is no longer a placeholder.
+
+- `feature/home/HomeUiState.kt` — `HomeUiState` (greeting, verse, today's prayer, recent rows,
+  `isCatalogueReady`) and `HomeAction` (`ReadPrayer`, `BeginSession`).
+- `feature/home/HomeViewModel.kt` — combines `GetTodaysSuggestedPrayerUseCase` with
+  `observeRecentlyOpenedPrayers`, reads `GetGreetingUseCase` and `GetTodaysVerseUseCase` on each
+  emission, and stamps `lastOpenedAt` through `RecordPrayerOpenedUseCase` on either action. The
+  initial value already carries the greeting and the verse, so the header never flashes empty.
+- `feature/home/HomeScreen.kt` — `HomeScreen` (stateless, previewed) and `HomeRoute` (binds the
+  ViewModel, then navigates). The sage-tinted header field rounded 40 at the bottom, brand eyebrow,
+  42sp greeting, italic verse and its reference; then "Today's prayer" as a 30-radius card with the
+  title, attribution, opening line, a 64h sage "Begin prayer" and a "Read it first" text action;
+  then "Recently prayed" as up to four 22-radius rows.
+- **New in domain**: `DailyVerse` + `DailyVerses` (31 AV lines) and `GetTodaysVerseUseCase`, picked by
+  the date exactly as today's prayer is. See `docs/DECISIONS.md` for why they are not in Room.
+- `AbbaNavHost` now shows `HomeRoute`; the Home placeholder and its sample-id navigation are gone.
+  The other placeholders stay until their tasks.
+- Nine home strings added to `strings.xml`, including the four greeting wordings.
+- **Tests**: 62 passing (12 new). `HomeViewModelTest` over `MainDispatcherRule` (new, in `testing/`)
+  covers the header arriving before the catalogue, today's prayer holding still while the screen is
+  watched, an open stamping the prayer and lifting it into the rows, recent order, today's prayer
+  never repeating itself in the rows, and the four-row cap. `GetTodaysVerseUseCaseTest` pins the
+  same-day/next-day/far-past behaviour.
+- Verified: `:app:assembleDebug` and `:app:testDebugUnitTest` pass, and on the API 35 emulator — the
+  header matches `docs/DESIGN_SYSTEM.md` and paints under the status bar, the verse and the suggestion
+  are unchanged across a rotation, "Read it first" reaches the Reader and "Begin prayer" the Session,
+  both with `prayerId = calvin-grant-almighty-god`.
 
 ## Task 4 — done and merged
 
@@ -123,17 +153,17 @@ The UI is still the untouched template "Hello Android" screen. That is expected 
 
 ## Start here for the next task
 
-### Task 5 — `feat/05-home-screen`
+### Task 6 — `feat/06-library-screen`
 
 ```
-git switch -c feat/05-home-screen main
+git switch -c feat/06-library-screen main
 ```
 
-The first real screen, replacing the `Home` placeholder: the greeting header on its rounded deep-forest
-field, today's verse, the suggested prayer card and the recent rows, over `GetGreetingUseCase` and
-`GetTodaysSuggestedPrayerUseCase`. `HomeUiState`, `HomeAction`, `HomeViewModel`, `HomeScreen`,
-`HomeRoute` per the UI pattern in `CLAUDE.md`.
+The Library, replacing its placeholder: the 38sp screen title, the pill search field, the kind tiles
+and collection tiles, and the prayer rows, over `SearchPrayersUseCase` and `FilterPrayersUseCase`.
+`LibraryUiState`, `LibraryAction`, `LibraryViewModel`, `LibraryScreen`, `LibraryRoute` per the UI
+pattern in `CLAUDE.md`. The search query and the selected filters belong in `SavedStateHandle`.
 
-**Done when** `:app:assembleDebug` and `:app:testDebugUnitTest` pass, the header matches
-`docs/DESIGN_SYSTEM.md`, the suggestion holds still across a rotation, and tapping through reaches the
-Reader and the Session with the right `prayerId`.
+**Done when** `:app:assembleDebug` and `:app:testDebugUnitTest` pass, the screen matches
+`docs/DESIGN_SYSTEM.md`, a search survives a rotation, the scroll offset still comes back after a tab
+switch, and a row reaches the Reader with the right `prayerId`.

@@ -5,4 +5,14 @@
     <string name="nav_library">Library</string>
     <string name="nav_my_prayers">My prayers</string>
     <string name="nav_saved">Saved</string>
+
+    <string name="home_greeting_morning">Good morning</string>
+    <string name="home_greeting_afternoon">Good afternoon</string>
+    <string name="home_greeting_evening">Good evening</string>
+    <string name="home_greeting_night">Peace to you tonight</string>
+    <string name="home_todays_prayer">Today\'s prayer</string>
+    <string name="home_begin_prayer">Begin prayer</string>
+    <string name="home_read_it">Read it first</string>
+    <string name="home_recently_prayed">Recently prayed</string>
+    <string name="home_open_prayer">Open</string>
 </resources>

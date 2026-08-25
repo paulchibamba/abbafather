@@ -25,6 +25,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import io.abbafather.core.designsystem.theme.AbbaTheme
+import io.abbafather.feature.home.HomeRoute
 
 /**
  * The whole app hangs here: one host, four tabs that keep their own back stacks, and three
@@ -74,16 +75,9 @@ fun AbbaNavHost(
  */
 fun NavGraphBuilder.abbaDestinations(navController: NavHostController) {
     composable<AbbaRoute.Home> {
-        PlaceholderScreen(
-            title = "Home",
-            actions = listOf(
-                PlaceholderAction("Open a reader") {
-                    navController.navigate(AbbaRoute.Reader(SamplePrayerId))
-                },
-                PlaceholderAction("Begin a session") {
-                    navController.navigate(AbbaRoute.Session(SamplePrayerId))
-                },
-            ),
+        HomeRoute(
+            onOpenReader = { prayerId -> navController.navigate(AbbaRoute.Reader(prayerId)) },
+            onBeginSession = { prayerId -> navController.navigate(AbbaRoute.Session(prayerId)) },
         )
     }
     composable<AbbaRoute.Library> {
