@@ -5,14 +5,12 @@ package io.abbafather.domain.model
  * matches the whole catalogue.
  */
 data class PrayerFilter(
-    val groups: Set<PrayerGroup> = emptySet(),
-    val kinds: Set<PrayerKind> = emptySet(),
-    val themes: Set<PrayerTheme> = emptySet(),
+    val parts: Set<PrayerPart> = emptySet(),
+    val tags: Set<PrayerTag> = emptySet(),
 ) {
-    val isEmpty: Boolean get() = groups.isEmpty() && kinds.isEmpty() && themes.isEmpty()
+    val isEmpty: Boolean get() = parts.isEmpty() && tags.isEmpty()
 
     fun matches(prayer: Prayer): Boolean =
-        (groups.isEmpty() || prayer.group in groups) &&
-            (kinds.isEmpty() || prayer.kind in kinds) &&
-            (themes.isEmpty() || prayer.themes.any { it in themes })
+        (parts.isEmpty() || prayer.part in parts) &&
+            (tags.isEmpty() || prayer.tags.any { it in tags })
 }

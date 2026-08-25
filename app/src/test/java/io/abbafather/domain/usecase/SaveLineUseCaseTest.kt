@@ -1,6 +1,6 @@
 package io.abbafather.domain.usecase
 
-import io.abbafather.domain.model.PrayerTheme
+import io.abbafather.domain.model.PrayerTag
 import io.abbafather.testing.CountingIdGenerator
 import io.abbafather.testing.FakeSavedLineRepository
 import io.abbafather.testing.testPrayer
@@ -24,16 +24,19 @@ class SaveLineUseCaseTest {
         clock = Clock.fixed(savedAt, ZoneOffset.UTC),
     )
     private val prayer = testPrayer(
-        id = "bcp-collect-for-peace",
-        themes = setOf(PrayerTheme.Peace),
-        lines = listOf("O God, from whom all holy desires,", "all good counsels do proceed;"),
+        id = "vov-106-morning",
+        tags = setOf(PrayerTag.Grace),
+        lines = listOf(
+            "Compassionate Lord, I woke up today because your mercy carried me here.",
+            "Thank you for the gift of another morning.",
+        ),
     )
 
     @Test
     fun `keeps the line with its own copy of where it came from`() = runTest {
         val saved = saveLine(prayer, lineIndex = 1)
 
-        assertEquals("all good counsels do proceed;", saved.text)
+        assertEquals("Thank you for the gift of another morning.", saved.text)
         assertEquals(prayer.id, saved.sourcePrayerId)
         assertEquals(prayer.title, saved.sourcePrayerTitle)
         assertEquals(prayer.attribution, saved.sourceAttribution)
@@ -45,17 +48,17 @@ class SaveLineUseCaseTest {
     }
 
     @Test
-    fun `inherits the prayer's themes when the reader chooses none`() = runTest {
+    fun `inherits the prayer's tags when the reader chooses none`() = runTest {
         val saved = saveLine(prayer, lineIndex = 0)
 
-        assertEquals(prayer.themes, saved.themes)
+        assertEquals(prayer.tags, saved.tags)
     }
 
     @Test
-    fun `the reader's own themes win over the prayer's`() = runTest {
-        val saved = saveLine(prayer, lineIndex = 0, themes = setOf(PrayerTheme.Grief))
+    fun `the reader's own tags win over the prayer's`() = runTest {
+        val saved = saveLine(prayer, lineIndex = 0, tags = setOf(PrayerTag.Suffering))
 
-        assertEquals(setOf(PrayerTheme.Grief), saved.themes)
+        assertEquals(setOf(PrayerTag.Suffering), saved.tags)
     }
 
     @Test

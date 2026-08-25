@@ -1,7 +1,7 @@
 package io.abbafather.data.local
 
 import io.abbafather.data.local.entity.SavedLineEntity
-import io.abbafather.domain.model.PrayerTheme
+import io.abbafather.domain.model.PrayerTag
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -32,14 +32,14 @@ class SavedLineDaoTest {
     }
 
     @Test
-    fun `themes survive the round trip`() = runTest {
+    fun `tags survive the round trip`() = runTest {
         savedLineDao.upsertSavedLine(
-            savedLine(id = "kept", themes = setOf(PrayerTheme.Grief, PrayerTheme.Presence)),
+            savedLine(id = "kept", tags = setOf(PrayerTag.Suffering, PrayerTag.FatherHeartOfGod)),
         )
 
         assertEquals(
-            setOf(PrayerTheme.Grief, PrayerTheme.Presence),
-            savedLineDao.getSavedLine("kept")?.themes,
+            setOf(PrayerTag.Suffering, PrayerTag.FatherHeartOfGod),
+            savedLineDao.getSavedLine("kept")?.tags,
         )
     }
 
@@ -83,7 +83,7 @@ class SavedLineDaoTest {
         id: String,
         createdAt: Long = 1_000L,
         sourceLineIndex: Int? = 5,
-        themes: Set<PrayerTheme> = emptySet(),
+        tags: Set<PrayerTag> = emptySet(),
     ) = SavedLineEntity(
         id = id,
         text = "You were with me, and I was not with you.",
@@ -91,7 +91,7 @@ class SavedLineDaoTest {
         sourcePrayerTitle = "Late Have I Loved You",
         sourceAttribution = "Augustine of Hippo, Confessions X",
         sourceLineIndex = sourceLineIndex,
-        themes = themes,
+        tags = tags,
         note = null,
         createdAt = createdAt,
         updatedAt = createdAt,

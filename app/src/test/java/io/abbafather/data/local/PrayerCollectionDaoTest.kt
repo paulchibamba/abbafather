@@ -3,8 +3,8 @@ package io.abbafather.data.local
 import io.abbafather.data.local.entity.PrayerCollectionEntity
 import io.abbafather.data.local.entity.PrayerEntity
 import io.abbafather.data.mapper.toDomain
-import io.abbafather.domain.model.PrayerGroup
-import io.abbafather.domain.model.PrayerKind
+import io.abbafather.domain.model.PrayerPart
+import io.abbafather.domain.model.PrayerVoice
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -74,10 +74,15 @@ class PrayerCollectionDaoTest {
     private fun prayerEntity(id: String, position: Int) = PrayerEntity(
         id = id,
         title = id,
-        author = null,
-        kind = PrayerKind.Psalm,
-        group = PrayerGroup.Psalter,
-        breathingPauseAfterLine = null,
+        part = PrayerPart.NeedsAndDevotions,
+        voice = PrayerVoice.Personal,
         cataloguePosition = position,
+        originalTitle = id,
+        originalAuthor = "Unattributed Puritan source (compiled and edited by Arthur Bennett)",
+        originalSource = "The Valley of Vision: A Collection of Puritan Prayers and Devotions",
+        originalPublicationDate = "1975",
+        copyrightStatus = "Compilation in copyright; underlying Puritan sources are public domain.",
+        adaptationType = "thematic modern adaptation",
+        adaptationNote = "Contemporary prayer based on the themes of the historical source.",
     )
 }

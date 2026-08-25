@@ -1,6 +1,6 @@
 package io.abbafather.domain.usecase
 
-import io.abbafather.domain.model.PrayerTheme
+import io.abbafather.domain.model.PrayerTag
 import io.abbafather.domain.model.SavedLine
 import io.abbafather.testing.CountingIdGenerator
 import io.abbafather.testing.FakePersonalPrayerRepository
@@ -28,7 +28,7 @@ class CreatePersonalPrayerFromLineUseCaseTest {
         sourcePrayerTitle = "Late Have I Loved You",
         sourceAttribution = "Augustine of Hippo, Confessions X",
         sourceLineIndex = 5,
-        themes = setOf(PrayerTheme.Presence),
+        tags = setOf(PrayerTag.FatherHeartOfGod),
         createdAt = 1L,
         updatedAt = 1L,
     )
@@ -40,7 +40,7 @@ class CreatePersonalPrayerFromLineUseCaseTest {
         assertEquals(listOf(savedLine.text), draft.lines)
         assertTrue(draft.body.endsWith("\n\n"))
         assertEquals("After Late Have I Loved You", draft.title)
-        assertEquals(savedLine.themes, draft.themes)
+        assertEquals(savedLine.tags, draft.tags)
         assertEquals(savedLine.id, draft.seededFromSavedLineId)
         assertEquals(writtenAt.toEpochMilli(), draft.createdAt)
     }

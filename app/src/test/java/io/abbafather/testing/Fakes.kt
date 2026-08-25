@@ -3,10 +3,13 @@ package io.abbafather.testing
 import io.abbafather.domain.model.PersonalPrayer
 import io.abbafather.domain.model.Prayer
 import io.abbafather.domain.model.PrayerCollection
-import io.abbafather.domain.model.PrayerGroup
-import io.abbafather.domain.model.PrayerKind
-import io.abbafather.domain.model.PrayerTheme
+import io.abbafather.domain.model.PrayerMovement
+import io.abbafather.domain.model.PrayerPart
+import io.abbafather.domain.model.PrayerProvenance
+import io.abbafather.domain.model.PrayerTag
+import io.abbafather.domain.model.PrayerVoice
 import io.abbafather.domain.model.SavedLine
+import io.abbafather.domain.model.ScriptureReference
 import io.abbafather.domain.repository.PersonalPrayerRepository
 import io.abbafather.domain.repository.PrayerRepository
 import io.abbafather.domain.repository.SavedLineRepository
@@ -160,24 +163,65 @@ class CountingIdGenerator : IdGenerator {
     override fun newId(): String = "id-${++issued}"
 }
 
+/**
+ * A catalogue prayer for a test to point at. Most tests care about one movement's worth of lines and
+ * say so with [lines]; a test about movements — pauses, headings, a line's place in the whole — gives
+ * [movementLines] instead and gets the flat line indices computed the way the seeder computes them.
+ */
 fun testPrayer(
     id: String,
-    title: String = "A Collect for Peace",
-    author: String? = "Book of Common Prayer, 1662",
-    kind: PrayerKind = PrayerKind.Evening,
-    group: PrayerGroup = PrayerGroup.BookOfCommonPrayer,
-    themes: Set<PrayerTheme> = setOf(PrayerTheme.Peace),
-    lines: List<String> = listOf("O God, from whom all holy desires,", "all good counsels do proceed;"),
-    breathingPauseAfterLine: Int? = null,
+    title: String = "Morning",
+    part: PrayerPart = PrayerPart.NeedsAndDevotions,
+    voice: PrayerVoice = PrayerVoice.Personal,
+    tags: Set<PrayerTag> = setOf(PrayerTag.Grace),
+    lines: List<String> = listOf(
+        "Compassionate Lord, I woke up today because your mercy carried me here.",
+        "Thank you for the gift of another morning.",
+    ),
+    movementLines: List<List<String>> = listOf(lines),
+    headings: List<String> = movementLines.indices.map { "Movement ${it + 1}" },
+    provenance: PrayerProvenance = testProvenance,
     lastOpenedAt: Long? = null,
 ) = Prayer(
     id = id,
     title = title,
-    author = author,
-    kind = kind,
-    group = group,
-    themes = themes,
-    lines = lines,
-    breathingPauseAfterLine = breathingPauseAfterLine,
+    part = part,
+    voice = voice,
+    tags = tags,
+    movements = testMovements(movementLines, headings),
+    provenance = provenance,
     lastOpenedAt = lastOpenedAt,
+)
+
+fun testMovements(
+    movementLines: List<List<String>>,
+    headings: List<String> = movementLines.indices.map { "Movement ${it + 1}" },
+): List<PrayerMovement> {
+    var firstLineIndex = 0
+    return movementLines.mapIndexed { index, lines ->
+        PrayerMovement(
+            index = index,
+            heading = headings[index],
+            lines = lines,
+            firstLineIndex = firstLineIndex,
+            themes = listOf("What movement ${index + 1} holds."),
+            scriptures = listOf(
+                ScriptureReference(
+                    reference = "Psalm ${index + 1}:1",
+                    translation = "ESV",
+                    connection = "Why Psalm ${index + 1} stands under this movement.",
+                ),
+            ),
+        ).also { firstLineIndex += lines.size }
+    }
+}
+
+val testProvenance = PrayerProvenance(
+    originalTitle = "Morning",
+    originalAuthor = "Unattributed Puritan source (compiled and edited by Arthur Bennett)",
+    originalSource = "The Valley of Vision: A Collection of Puritan Prayers and Devotions",
+    originalPublicationDate = "1975",
+    copyrightStatus = "Compilation in copyright; underlying Puritan sources are public domain.",
+    adaptationType = "thematic modern adaptation",
+    adaptationNote = "Contemporary prayer based on the themes of the historical source.",
 )

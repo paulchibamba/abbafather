@@ -6,9 +6,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.abbafather.domain.model.Prayer
 import io.abbafather.domain.model.PrayerFilter
-import io.abbafather.domain.model.PrayerGroup
-import io.abbafather.domain.model.PrayerKind
-import io.abbafather.domain.model.PrayerTheme
+import io.abbafather.domain.model.PrayerPart
+import io.abbafather.domain.model.PrayerTag
 import io.abbafather.domain.repository.PrayerRepository
 import io.abbafather.domain.usecase.FilterPrayersUseCase
 import io.abbafather.domain.usecase.RecordPrayerOpenedUseCase
@@ -42,14 +41,12 @@ class LibraryViewModel @Inject constructor(
     private val searchQuery: StateFlow<String> = savedStateHandle.getStateFlow(SearchQueryKey, "")
 
     private val filter: Flow<PrayerFilter> = combine(
-        savedStateHandle.selectedNames(SelectedGroupsKey),
-        savedStateHandle.selectedNames(SelectedKindsKey),
-        savedStateHandle.selectedNames(SelectedThemesKey),
-    ) { groupNames, kindNames, themeNames ->
+        savedStateHandle.selectedNames(SelectedPartsKey),
+        savedStateHandle.selectedNames(SelectedTagsKey),
+    ) { partNames, tagNames ->
         PrayerFilter(
-            groups = groupNames.mapNotNullTo(mutableSetOf()) { name -> PrayerGroup.entries.byName(name) },
-            kinds = kindNames.mapNotNullTo(mutableSetOf()) { name -> PrayerKind.entries.byName(name) },
-            themes = themeNames.mapNotNullTo(mutableSetOf()) { name -> PrayerTheme.entries.byName(name) },
+            parts = partNames.mapNotNullTo(mutableSetOf()) { name -> PrayerPart.entries.byName(name) },
+            tags = tagNames.mapNotNullTo(mutableSetOf()) { name -> PrayerTag.entries.byName(name) },
         )
     }
 
@@ -77,14 +74,12 @@ class LibraryViewModel @Inject constructor(
     fun onAction(action: LibraryAction) {
         when (action) {
             is LibraryAction.SearchQueryChanged -> savedStateHandle[SearchQueryKey] = action.query
-            is LibraryAction.ToggleKind -> savedStateHandle.toggle(SelectedKindsKey, action.kind.name)
-            is LibraryAction.ToggleGroup -> savedStateHandle.toggle(SelectedGroupsKey, action.group.name)
-            is LibraryAction.ToggleTheme -> savedStateHandle.toggle(SelectedThemesKey, action.theme.name)
+            is LibraryAction.TogglePart -> savedStateHandle.toggle(SelectedPartsKey, action.part.name)
+            is LibraryAction.ToggleTag -> savedStateHandle.toggle(SelectedTagsKey, action.tag.name)
             LibraryAction.ClearNarrowing -> {
                 savedStateHandle[SearchQueryKey] = ""
-                savedStateHandle[SelectedGroupsKey] = ""
-                savedStateHandle[SelectedKindsKey] = ""
-                savedStateHandle[SelectedThemesKey] = ""
+                savedStateHandle[SelectedPartsKey] = ""
+                savedStateHandle[SelectedTagsKey] = ""
             }
             // Reaching for a prayer from the shelf counts as opening it, exactly as it does on Home.
             is LibraryAction.OpenPrayer -> viewModelScope.launch { recordPrayerOpened(action.prayerId) }
@@ -93,9 +88,8 @@ class LibraryViewModel @Inject constructor(
 
     private companion object {
         const val SearchQueryKey = "librarySearchQuery"
-        const val SelectedGroupsKey = "librarySelectedGroups"
-        const val SelectedKindsKey = "librarySelectedKinds"
-        const val SelectedThemesKey = "librarySelectedThemes"
+        const val SelectedPartsKey = "librarySelectedParts"
+        const val SelectedTagsKey = "librarySelectedTags"
     }
 }
 
@@ -126,14 +120,11 @@ private data class LibraryNarrowing(val query: String, val filter: PrayerFilter)
         return LibraryUiState(
             searchQuery = query,
             filter = filter,
-            kindTiles = catalogue.countsBy(Prayer::kind).map { (kind, count) ->
-                KindTile(kind = kind, prayerCount = count, isSelected = kind in filter.kinds)
+            partTiles = catalogue.countsBy(Prayer::part).map { (part, count) ->
+                PartTile(part = part, prayerCount = count, isSelected = part in filter.parts)
             },
-            groupTiles = catalogue.countsBy(Prayer::group).map { (group, count) ->
-                GroupTile(group = group, prayerCount = count, isSelected = group in filter.groups)
-            },
-            themeChips = catalogue.themesPresent().map { theme ->
-                ThemeChip(theme = theme, isSelected = theme in filter.themes)
+            tagChips = catalogue.tagsPresent().map { tag ->
+                TagChip(tag = tag, isSelected = tag in filter.tags)
             },
             // The two narrowings agree rather than compete: a prayer is shown when it survives both.
             prayers = matchingQuery.filter { it.id in idsMatchingFilter },
@@ -150,5 +141,6 @@ private fun <T : Enum<T>> List<Prayer>.countsBy(property: (Prayer) -> T): List<P
         .toList()
         .sortedBy { (value, _) -> value.ordinal }
 
-private fun List<Prayer>.themesPresent(): List<PrayerTheme> =
-    flatMapTo(mutableSetOf()) { it.themes }.sortedBy(PrayerTheme::ordinal)
+/** Only the tags the catalogue actually uses, in the vocabulary's own order. */
+private fun List<Prayer>.tagsPresent(): List<PrayerTag> =
+    flatMapTo(mutableSetOf()) { it.tags }.sortedBy(PrayerTag::ordinal)

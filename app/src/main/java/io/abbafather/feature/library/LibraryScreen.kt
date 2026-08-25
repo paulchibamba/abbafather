@@ -57,9 +57,11 @@ import io.abbafather.core.designsystem.theme.AbbaShapes
 import io.abbafather.core.designsystem.theme.AbbaSpacing
 import io.abbafather.core.designsystem.theme.AbbaTheme
 import io.abbafather.domain.model.Prayer
-import io.abbafather.domain.model.PrayerGroup
-import io.abbafather.domain.model.PrayerKind
-import io.abbafather.domain.model.PrayerTheme
+import io.abbafather.domain.model.PrayerMovement
+import io.abbafather.domain.model.PrayerPart
+import io.abbafather.domain.model.PrayerProvenance
+import io.abbafather.domain.model.PrayerTag
+import io.abbafather.domain.model.PrayerVoice
 
 /** Binds the ViewModel and turns opening a prayer into the move to the Reader. */
 @Composable
@@ -98,51 +100,35 @@ fun LibraryScreen(
         item(key = "header") {
             LibraryHeader(
                 searchQuery = uiState.searchQuery,
-                // Every prayer has exactly one kind, so the kind tiles already count the catalogue.
-                catalogueSize = uiState.kindTiles.sumOf { it.prayerCount },
+                catalogueSize = uiState.catalogueSize,
                 onQueryChanged = { onAction(LibraryAction.SearchQueryChanged(it)) },
             )
         }
 
-        if (uiState.kindTiles.isNotEmpty()) {
-            item(key = "kinds") {
-                TileBlock(label = stringResource(R.string.library_occasions)) {
-                    TileGrid(uiState.kindTiles) { _, tile ->
+        if (uiState.partTiles.isNotEmpty()) {
+            item(key = "parts") {
+                TileBlock(label = stringResource(R.string.library_parts)) {
+                    TileGrid(uiState.partTiles) { index, tile ->
                         LibraryTile(
-                            name = tile.kind.displayName,
+                            name = tile.part.displayName,
                             prayerCount = tile.prayerCount,
                             isSelected = tile.isSelected,
-                            onClick = { onAction(LibraryAction.ToggleKind(tile.kind)) },
-                        )
-                    }
-                }
-            }
-        }
-
-        if (uiState.groupTiles.isNotEmpty()) {
-            item(key = "groups") {
-                TileBlock(label = stringResource(R.string.library_collections)) {
-                    TileGrid(uiState.groupTiles) { index, tile ->
-                        LibraryTile(
-                            name = tile.group.displayName,
-                            prayerCount = tile.prayerCount,
-                            isSelected = tile.isSelected,
-                            // The design tints the fourth collection tile clay; the cycle carries on
-                            // from there so no two neighbouring tiles share a colour.
+                            // The design tints the fourth tile clay; the cycle carries on from there
+                            // so no two neighbouring tiles share a colour.
                             containerColor = collectionTileColor(index),
-                            onClick = { onAction(LibraryAction.ToggleGroup(tile.group)) },
+                            onClick = { onAction(LibraryAction.TogglePart(tile.part)) },
                         )
                     }
                 }
             }
         }
 
-        if (uiState.themeChips.isNotEmpty()) {
-            item(key = "themes") {
+        if (uiState.tagChips.isNotEmpty()) {
+            item(key = "tags") {
                 TileBlock(label = stringResource(R.string.library_themes)) {
-                    ThemeChipRow(
-                        chips = uiState.themeChips,
-                        onToggle = { theme -> onAction(LibraryAction.ToggleTheme(theme)) },
+                    TagChipRow(
+                        chips = uiState.tagChips,
+                        onToggle = { tag -> onAction(LibraryAction.ToggleTag(tag)) },
                     )
                 }
             }
@@ -350,9 +336,9 @@ private fun LibraryTile(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ThemeChipRow(
-    chips: List<ThemeChip>,
-    onToggle: (PrayerTheme) -> Unit,
+private fun TagChipRow(
+    chips: List<TagChip>,
+    onToggle: (PrayerTag) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     FlowRow(
@@ -362,9 +348,9 @@ private fun ThemeChipRow(
     ) {
         chips.forEach { chip ->
             SelectableChip(
-                label = chip.theme.displayName,
+                label = chip.tag.displayName,
                 isSelected = chip.isSelected,
-                onToggle = { onToggle(chip.theme) },
+                onToggle = { onToggle(chip.tag) },
             )
         }
     }
@@ -456,23 +442,17 @@ private fun LibraryScreenPreview() {
     AbbaTheme {
         LibraryScreen(
             uiState = LibraryUiState(
-                kindTiles = listOf(
-                    KindTile(PrayerKind.Morning, prayerCount = 6, isSelected = false),
-                    KindTile(PrayerKind.Evening, prayerCount = 4, isSelected = true),
-                    KindTile(PrayerKind.Confession, prayerCount = 4, isSelected = false),
-                    KindTile(PrayerKind.Meditation, prayerCount = 7, isSelected = false),
-                ),
-                groupTiles = PrayerGroup.entries.take(4).mapIndexed { index, group ->
-                    GroupTile(group, prayerCount = 7 - index, isSelected = false)
+                partTiles = PrayerPart.entries.take(4).mapIndexed { index, part ->
+                    PartTile(part, prayerCount = 29 - index * 4, isSelected = index == 1)
                 },
-                themeChips = listOf(
-                    ThemeChip(PrayerTheme.Peace, isSelected = false),
-                    ThemeChip(PrayerTheme.Mercy, isSelected = true),
-                    ThemeChip(PrayerTheme.Guidance, isSelected = false),
+                tagChips = listOf(
+                    TagChip(PrayerTag.Grace, isSelected = false),
+                    TagChip(PrayerTag.Repentance, isSelected = true),
+                    TagChip(PrayerTag.Assurance, isSelected = false),
                 ),
                 prayers = listOf(
-                    previewPrayer("A Collect for Peace", "Book of Common Prayer, 1662"),
-                    previewPrayer("An Evening Confession", "After Lancelot Andrewes"),
+                    previewPrayer("The Valley of Vision"),
+                    previewPrayer("Morning"),
                 ),
                 isCatalogueReady = true,
             ),
@@ -481,12 +461,29 @@ private fun LibraryScreenPreview() {
     }
 }
 
-private fun previewPrayer(title: String, author: String) = Prayer(
+private fun previewPrayer(title: String) = Prayer(
     id = title,
     title = title,
-    author = author,
-    kind = PrayerKind.Evening,
-    group = PrayerGroup.BookOfCommonPrayer,
-    themes = setOf(PrayerTheme.Peace),
-    lines = listOf("O God, from whom all holy desires do proceed."),
+    part = PrayerPart.NeedsAndDevotions,
+    voice = PrayerVoice.Personal,
+    tags = setOf(PrayerTag.Grace),
+    movements = listOf(
+        PrayerMovement(
+            index = 0,
+            heading = "Receiving this new day as mercy",
+            lines = listOf("Compassionate Lord, I woke up today because your mercy carried me here."),
+            firstLineIndex = 0,
+        ),
+    ),
+    provenance = previewProvenance,
+)
+
+private val previewProvenance = PrayerProvenance(
+    originalTitle = "Morning",
+    originalAuthor = "Unattributed Puritan source (compiled and edited by Arthur Bennett)",
+    originalSource = "The Valley of Vision: A Collection of Puritan Prayers and Devotions",
+    originalPublicationDate = "1975",
+    copyrightStatus = "Compilation in copyright; underlying Puritan sources are public domain.",
+    adaptationType = "thematic modern adaptation",
+    adaptationNote = "Contemporary prayer based on the themes of the historical source.",
 )

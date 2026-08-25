@@ -2,9 +2,8 @@ package io.abbafather.feature.library
 
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
-import io.abbafather.domain.model.PrayerGroup
-import io.abbafather.domain.model.PrayerKind
-import io.abbafather.domain.model.PrayerTheme
+import io.abbafather.domain.model.PrayerPart
+import io.abbafather.domain.model.PrayerTag
 import io.abbafather.domain.usecase.FilterPrayersUseCase
 import io.abbafather.domain.usecase.RecordPrayerOpenedUseCase
 import io.abbafather.domain.usecase.SearchPrayersUseCase
@@ -32,40 +31,32 @@ class LibraryViewModelTest {
 
     private val catalogue = listOf(
         testPrayer(
-            id = "bcp-peace",
-            title = "A Collect for Peace",
-            author = "Book of Common Prayer, 1662",
-            kind = PrayerKind.Evening,
-            group = PrayerGroup.BookOfCommonPrayer,
-            themes = setOf(PrayerTheme.Peace),
-            lines = listOf("O God, from whom all holy desires do proceed."),
+            id = "vov-069-contrition",
+            title = "Contrition",
+            part = PrayerPart.PenitenceAndDeprecation,
+            tags = setOf(PrayerTag.Repentance),
+            lines = listOf("Break my heart over what breaks yours."),
         ),
         testPrayer(
-            id = "bcp-morning",
-            title = "A Collect for Grace",
-            author = "Book of Common Prayer, 1662",
-            kind = PrayerKind.Morning,
-            group = PrayerGroup.BookOfCommonPrayer,
-            themes = setOf(PrayerTheme.Protection),
-            lines = listOf("O Lord, our heavenly Father, Almighty and everlasting God."),
+            id = "vov-081-penitence",
+            title = "Penitence",
+            part = PrayerPart.PenitenceAndDeprecation,
+            tags = setOf(PrayerTag.Repentance, PrayerTag.Forgiveness),
+            lines = listOf("I come to you with nothing to offer but my need."),
         ),
         testPrayer(
-            id = "psalm-23",
-            title = "Psalm 23",
-            author = null,
-            kind = PrayerKind.Psalm,
-            group = PrayerGroup.Psalter,
-            themes = setOf(PrayerTheme.Peace, PrayerTheme.Guidance),
-            lines = listOf("The Lord is my shepherd; I shall not want."),
+            id = "vov-106-morning",
+            title = "Morning",
+            part = PrayerPart.NeedsAndDevotions,
+            tags = setOf(PrayerTag.Grace, PrayerTag.MorningAndEvening),
+            lines = listOf("Compassionate Lord, I woke up today because your mercy carried me here."),
         ),
         testPrayer(
-            id = "puritan-valley",
-            title = "The Valley of Vision",
-            author = "Puritan, anonymous",
-            kind = PrayerKind.Meditation,
-            group = PrayerGroup.Puritan,
-            themes = setOf(PrayerTheme.Mercy),
-            lines = listOf("Lord, high and holy, meek and lowly."),
+            id = "vov-142-contentment",
+            title = "Contentment",
+            part = PrayerPart.GiftsOfGrace,
+            tags = setOf(PrayerTag.Contentment),
+            lines = listOf("Teach me to want what you have already given."),
         ),
     )
 
@@ -100,34 +91,41 @@ class LibraryViewModelTest {
 
         viewModel.loadedStates.test {
             skipItems(1)
-            viewModel.onAction(LibraryAction.ToggleGroup(PrayerGroup.Psalter))
+            viewModel.onAction(LibraryAction.TogglePart(PrayerPart.GiftsOfGrace))
 
             val uiState = awaitItem()
             assertEquals(1, uiState.prayers.size)
             assertEquals(
                 2,
-                uiState.groupTiles.first { it.group == PrayerGroup.BookOfCommonPrayer }.prayerCount,
+                uiState.partTiles.first { it.part == PrayerPart.PenitenceAndDeprecation }.prayerCount,
             )
-            assertTrue(uiState.groupTiles.first { it.group == PrayerGroup.Psalter }.isSelected)
+            assertTrue(uiState.partTiles.first { it.part == PrayerPart.GiftsOfGrace }.isSelected)
+            assertEquals(catalogue.size, uiState.catalogueSize)
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `a search matches a title, an author and a line`() = runTest {
+    fun `a search matches a title, a part and a line`() = runTest {
         val viewModel = viewModel()
 
         viewModel.loadedStates.test {
             skipItems(1)
 
-            viewModel.onAction(LibraryAction.SearchQueryChanged("shepherd"))
-            assertEquals(listOf("psalm-23"), awaitItem().prayers.map { it.id })
+            viewModel.onAction(LibraryAction.SearchQueryChanged("breaks yours"))
+            assertEquals(listOf("vov-069-contrition"), awaitItem().prayers.map { it.id })
 
-            viewModel.onAction(LibraryAction.SearchQueryChanged("Puritan"))
-            assertEquals(listOf("puritan-valley"), awaitItem().prayers.map { it.id })
+            viewModel.onAction(LibraryAction.SearchQueryChanged("Penitence"))
+            assertEquals(
+                listOf("vov-069-contrition", "vov-081-penitence"),
+                awaitItem().prayers.map { it.id },
+            )
 
-            viewModel.onAction(LibraryAction.SearchQueryChanged("collect"))
-            assertEquals(listOf("bcp-peace", "bcp-morning"), awaitItem().prayers.map { it.id })
+            viewModel.onAction(LibraryAction.SearchQueryChanged("cont"))
+            assertEquals(
+                listOf("vov-069-contrition", "vov-142-contentment"),
+                awaitItem().prayers.map { it.id },
+            )
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -139,12 +137,12 @@ class LibraryViewModelTest {
         viewModel.loadedStates.test {
             skipItems(1)
 
-            viewModel.onAction(LibraryAction.SearchQueryChanged("Collect"))
+            viewModel.onAction(LibraryAction.SearchQueryChanged("cont"))
             skipItems(1)
-            viewModel.onAction(LibraryAction.ToggleKind(PrayerKind.Morning))
+            viewModel.onAction(LibraryAction.TogglePart(PrayerPart.GiftsOfGrace))
 
             val uiState = awaitItem()
-            assertEquals(listOf("bcp-morning"), uiState.prayers.map { it.id })
+            assertEquals(listOf("vov-142-contentment"), uiState.prayers.map { it.id })
             assertTrue(uiState.isNarrowed)
             cancelAndIgnoreRemainingEvents()
         }
@@ -157,11 +155,14 @@ class LibraryViewModelTest {
         viewModel.loadedStates.test {
             skipItems(1)
 
-            viewModel.onAction(LibraryAction.ToggleTheme(PrayerTheme.Mercy))
-            assertEquals(listOf("puritan-valley"), awaitItem().prayers.map { it.id })
+            viewModel.onAction(LibraryAction.ToggleTag(PrayerTag.Contentment))
+            assertEquals(listOf("vov-142-contentment"), awaitItem().prayers.map { it.id })
 
-            viewModel.onAction(LibraryAction.ToggleTheme(PrayerTheme.Guidance))
-            assertEquals(listOf("psalm-23", "puritan-valley"), awaitItem().prayers.map { it.id })
+            viewModel.onAction(LibraryAction.ToggleTag(PrayerTag.Forgiveness))
+            assertEquals(
+                listOf("vov-081-penitence", "vov-142-contentment"),
+                awaitItem().prayers.map { it.id },
+            )
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -173,10 +174,10 @@ class LibraryViewModelTest {
         viewModel.loadedStates.test {
             skipItems(1)
 
-            viewModel.onAction(LibraryAction.ToggleKind(PrayerKind.Psalm))
-            assertEquals(listOf("psalm-23"), awaitItem().prayers.map { it.id })
+            viewModel.onAction(LibraryAction.ToggleTag(PrayerTag.Contentment))
+            assertEquals(listOf("vov-142-contentment"), awaitItem().prayers.map { it.id })
 
-            viewModel.onAction(LibraryAction.ToggleKind(PrayerKind.Psalm))
+            viewModel.onAction(LibraryAction.ToggleTag(PrayerTag.Contentment))
             assertEquals(catalogue.map { it.id }, awaitItem().prayers.map { it.id })
             cancelAndIgnoreRemainingEvents()
         }
@@ -188,9 +189,9 @@ class LibraryViewModelTest {
 
         viewModel.loadedStates.test {
             skipItems(1)
-            viewModel.onAction(LibraryAction.SearchQueryChanged("peace"))
+            viewModel.onAction(LibraryAction.SearchQueryChanged("cont"))
             skipItems(1)
-            viewModel.onAction(LibraryAction.ToggleGroup(PrayerGroup.Psalter))
+            viewModel.onAction(LibraryAction.TogglePart(PrayerPart.GiftsOfGrace))
             skipItems(1)
 
             viewModel.onAction(LibraryAction.ClearNarrowing)
@@ -226,20 +227,20 @@ class LibraryViewModelTest {
 
         before.loadedStates.test {
             skipItems(1)
-            before.onAction(LibraryAction.SearchQueryChanged("Collect"))
+            before.onAction(LibraryAction.SearchQueryChanged("cont"))
             skipItems(1)
-            before.onAction(LibraryAction.ToggleKind(PrayerKind.Morning))
+            before.onAction(LibraryAction.TogglePart(PrayerPart.GiftsOfGrace))
             awaitItem()
             cancelAndIgnoreRemainingEvents()
         }
 
         val after = viewModel(savedStateHandle)
 
-        assertEquals("Collect", after.uiState.value.searchQuery)
+        assertEquals("cont", after.uiState.value.searchQuery)
         after.loadedStates.test {
             val uiState = awaitItem()
-            assertEquals(setOf(PrayerKind.Morning), uiState.filter.kinds)
-            assertEquals(listOf("bcp-morning"), uiState.prayers.map { it.id })
+            assertEquals(setOf(PrayerPart.GiftsOfGrace), uiState.filter.parts)
+            assertEquals(listOf("vov-142-contentment"), uiState.prayers.map { it.id })
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -250,10 +251,10 @@ class LibraryViewModelTest {
 
         viewModel.loadedStates.test {
             skipItems(1)
-            viewModel.onAction(LibraryAction.OpenPrayer("psalm-23"))
+            viewModel.onAction(LibraryAction.OpenPrayer("vov-106-morning"))
             awaitItem()
 
-            assertEquals(clock.millis(), prayerRepository.getPrayer("psalm-23")?.lastOpenedAt)
+            assertEquals(clock.millis(), prayerRepository.getPrayer("vov-106-morning")?.lastOpenedAt)
             cancelAndIgnoreRemainingEvents()
         }
     }

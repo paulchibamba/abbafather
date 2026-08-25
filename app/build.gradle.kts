@@ -41,6 +41,13 @@ android {
             isIncludeAndroidResources = true
         }
     }
+
+    // MigrationTestHelper reads the exported schemas as assets, and Robolectric reads the assets of
+    // the variant under test — so the committed schemas are added to the debug variant alone. They
+    // are a development artefact and never travel in a release build.
+    sourceSets.getByName("debug") {
+        assets.srcDirs(files("$projectDir/schemas"))
+    }
 }
 
 ksp {

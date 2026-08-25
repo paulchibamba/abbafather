@@ -46,9 +46,11 @@ import io.abbafather.core.designsystem.theme.AbbaShapes
 import io.abbafather.core.designsystem.theme.AbbaSpacing
 import io.abbafather.core.designsystem.theme.AbbaTheme
 import io.abbafather.domain.model.Prayer
-import io.abbafather.domain.model.PrayerGroup
-import io.abbafather.domain.model.PrayerKind
-import io.abbafather.domain.model.PrayerTheme
+import io.abbafather.domain.model.PrayerMovement
+import io.abbafather.domain.model.PrayerPart
+import io.abbafather.domain.model.PrayerProvenance
+import io.abbafather.domain.model.PrayerTag
+import io.abbafather.domain.model.PrayerVoice
 
 /**
  * Binds the ViewModel and performs every move the reader makes from here. Growing a line into a
@@ -178,9 +180,9 @@ private fun PrayerHeading(
 }
 
 /**
- * The prayer set line by line, each line its own tap target. The hit area is inset by a negative
- * margin so its tinted field can have air inside it while the text still starts flush with the
- * screen's own margin.
+ * The prayer movement by movement: each one named, then set line by line with every line its own tap
+ * target. A line's hit area reaches past the text into the margin, so its tinted field can have air
+ * inside it while the text still starts flush with the screen's own margin.
  */
 @Composable
 private fun PrayerBody(
@@ -191,18 +193,35 @@ private fun PrayerBody(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
-        prayer.lines.forEachIndexed { lineIndex, line ->
-            PrayerLine(
-                line = line,
-                isKept = lineIndex in keptLineIndices,
-                isOpen = lineIndex == openLineIndex,
-                onClick = { onLineSelected(lineIndex) },
-            )
-            if (prayer.hasBreathingPauseAfter(lineIndex)) {
+        prayer.movements.forEach { movement ->
+            MovementHeading(heading = movement.heading)
+            movement.lines.forEachIndexed { position, line ->
+                val lineIndex = movement.firstLineIndex + position
+                PrayerLine(
+                    line = line,
+                    isKept = lineIndex in keptLineIndices,
+                    isOpen = lineIndex == openLineIndex,
+                    onClick = { onLineSelected(lineIndex) },
+                )
+            }
+            if (movement != prayer.movements.last()) {
                 BreathingPauseMark()
             }
         }
     }
+}
+
+/** What this turn of the prayer is asking. Quiet enough to read past, there when you look for it. */
+@Composable
+private fun MovementHeading(
+    heading: String,
+    modifier: Modifier = Modifier,
+) {
+    SectionLabel(
+        text = heading,
+        color = AbbaTheme.colors.mutedSage,
+        modifier = modifier.padding(start = LineHitAreaInset, top = 8.dp, bottom = 14.dp),
+    )
 }
 
 @Composable
@@ -323,11 +342,11 @@ private fun KeepStage(
             horizontalArrangement = Arrangement.spacedBy(AbbaSpacing.ChipGap),
             verticalArrangement = Arrangement.spacedBy(AbbaSpacing.ChipGap),
         ) {
-            sheet.themeChips.forEach { chip ->
+            sheet.tagChips.forEach { chip ->
                 SelectableChip(
-                    label = chip.theme.displayName,
+                    label = chip.tag.displayName,
                     isSelected = chip.isSelected,
-                    onToggle = { onAction(ReaderAction.ToggleTheme(chip.theme)) },
+                    onToggle = { onAction(ReaderAction.ToggleTag(chip.tag)) },
                 )
             }
         }
@@ -445,18 +464,38 @@ private fun ReaderScreenPreview() {
 }
 
 private val previewPrayer = Prayer(
-    id = "bcp-collect-for-peace",
-    title = "A Collect for Peace",
-    author = "Book of Common Prayer, 1662",
-    kind = PrayerKind.Evening,
-    group = PrayerGroup.BookOfCommonPrayer,
-    themes = setOf(PrayerTheme.Peace),
-    lines = listOf(
-        "O God, from whom all holy desires, all good counsels, and all just works do proceed:",
-        "Give unto thy servants that peace which the world cannot give;",
-        "that our hearts may be set to obey thy commandments,",
-        "and also that by thee, we being defended from the fear of our enemies,",
-        "may pass our time in rest and quietness.",
+    id = "vov-106-morning",
+    title = "Morning",
+    part = PrayerPart.NeedsAndDevotions,
+    voice = PrayerVoice.Personal,
+    tags = setOf(PrayerTag.Grace, PrayerTag.MorningAndEvening),
+    movements = listOf(
+        PrayerMovement(
+            index = 0,
+            heading = "Receiving this new day as mercy",
+            lines = listOf(
+                "Compassionate Lord, I woke up today because your mercy carried me here.",
+                "Thank you for the gift of another morning.",
+            ),
+            firstLineIndex = 0,
+        ),
+        PrayerMovement(
+            index = 1,
+            heading = "Asking for the day to matter",
+            lines = listOf(
+                "But I don't want to waste this day by merely getting through it.",
+                "Let it matter for my soul.",
+            ),
+            firstLineIndex = 2,
+        ),
     ),
-    breathingPauseAfterLine = 2,
+    provenance = PrayerProvenance(
+        originalTitle = "Morning",
+        originalAuthor = "Unattributed Puritan source (compiled and edited by Arthur Bennett)",
+        originalSource = "The Valley of Vision: A Collection of Puritan Prayers and Devotions",
+        originalPublicationDate = "1975",
+        copyrightStatus = "Compilation in copyright; underlying Puritan sources are public domain.",
+        adaptationType = "thematic modern adaptation",
+        adaptationNote = "Contemporary prayer based on the themes of the historical source.",
+    ),
 )

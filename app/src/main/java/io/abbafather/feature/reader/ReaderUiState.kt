@@ -2,7 +2,7 @@ package io.abbafather.feature.reader
 
 import androidx.compose.runtime.Immutable
 import io.abbafather.domain.model.Prayer
-import io.abbafather.domain.model.PrayerTheme
+import io.abbafather.domain.model.PrayerTag
 
 /**
  * The prayer read whole, plus whatever the keep-a-line sheet is currently saying. [keepSheet] is
@@ -25,7 +25,7 @@ data class KeepLineSheetUiState(
     val stage: KeepLineStage,
     val lineIndex: Int,
     val line: String,
-    val themeChips: List<KeepThemeChip> = emptyList(),
+    val tagChips: List<KeepTagChip> = emptyList(),
 )
 
 enum class KeepLineStage {
@@ -40,7 +40,7 @@ enum class KeepLineStage {
 }
 
 @Immutable
-data class KeepThemeChip(val theme: PrayerTheme, val isSelected: Boolean)
+data class KeepTagChip(val tag: PrayerTag, val isSelected: Boolean)
 
 /** What the reader can do while reading a prayer. */
 sealed interface ReaderAction {
@@ -54,7 +54,7 @@ sealed interface ReaderAction {
 
     data object DismissSheet : ReaderAction
 
-    data class ToggleTheme(val theme: PrayerTheme) : ReaderAction
+    data class ToggleTag(val tag: PrayerTag) : ReaderAction
 
     data object KeepLine : ReaderAction
 

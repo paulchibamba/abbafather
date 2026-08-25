@@ -20,6 +20,7 @@ import io.abbafather.data.local.dao.PersonalPrayerDao
 import io.abbafather.data.local.dao.PrayerCollectionDao
 import io.abbafather.data.local.dao.PrayerDao
 import io.abbafather.data.local.dao.SavedLineDao
+import io.abbafather.data.local.migration.AbbaMigrations
 import io.abbafather.data.local.seed.CatalogueSeeder
 import io.abbafather.data.preferences.SettingsDataStore
 import kotlinx.coroutines.CoroutineDispatcher
@@ -35,6 +36,10 @@ object DatabaseModule {
     /**
      * The seeder needs DAOs from the database it is being handed to, so it arrives as a [Provider]
      * and is only resolved inside the callback — by which point the database exists.
+     *
+     * The catalogue fills itself whenever it is empty, which is true on a fresh install and again
+     * after a migration that replaced it — so the seed runs from `onOpen` as well as `onCreate`, and
+     * [CatalogueSeeder] decides whether there is anything to do.
      *
      * There is deliberately no `fallbackToDestructiveMigration`: this database holds prayers people
      * wrote, and a missing migration must fail loudly rather than quietly empty their Saved screen.
@@ -52,8 +57,14 @@ object DatabaseModule {
                     super.onCreate(connection)
                     applicationScope.launch { seeder.get().seedCatalogueIfEmpty() }
                 }
+
+                override fun onOpen(connection: SQLiteConnection) {
+                    super.onOpen(connection)
+                    applicationScope.launch { seeder.get().seedCatalogueIfEmpty() }
+                }
             },
         )
+        .addMigrations(*AbbaMigrations)
         .build()
 
     @Provides
