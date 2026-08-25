@@ -21,7 +21,7 @@ you love; write your own prayers. No accounts, no network, no notifications.
 | 4 | App shell — navigation graph, pill bottom bar | `feat/04-app-shell-navigation` | merged, `task-04` |
 | 5 | Home screen | `feat/05-home-screen` | merged, `task-05` |
 | 6 | Library screen | `feat/06-library-screen` | merged, `task-06` |
-| 7 | Reader + keep-a-line bottom sheet | `feat/07-reader-and-keep-line-sheet` | built, awaiting approval |
+| 7 | Reader + keep-a-line bottom sheet | `feat/07-reader-and-keep-line-sheet` | merged, `task-07` |
 | 8 | Prayer session | `feat/08-prayer-session` | not started |
 | 9 | Saved screen | `feat/09-saved-screen` | not started |
 | 10 | My prayers screen | `feat/10-my-prayers-screen` | not started |
@@ -31,7 +31,7 @@ you love; write your own prayers. No accounts, no network, no notifications.
 Each task is built on its own branch, verified, then **stopped for approval**. Only after approval:
 `git switch main && git merge --no-ff <branch> && git tag task-<nn>`.
 
-## Task 7 — built, awaiting approval
+## Task 7 — done and merged
 
 The prayer read whole, and the sheet that keeps a line of it.
 
