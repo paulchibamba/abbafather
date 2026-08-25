@@ -1,0 +1,729 @@
+{
+  "version": 1,
+  "prayers": [
+    {
+      "id": "bcp-collect-for-peace",
+      "title": "A Collect for Peace",
+      "author": "Book of Common Prayer, 1662",
+      "kind": "Evening",
+      "group": "BookOfCommonPrayer",
+      "themes": [
+        "Peace",
+        "Protection"
+      ],
+      "breathingPauseAfterLine": 2,
+      "lines": [
+        "O God, from whom all holy desires,",
+        "all good counsels, and all just works do proceed;",
+        "give unto thy servants that peace which the world cannot give;",
+        "that both our hearts may be set to obey thy commandments,",
+        "and also that by thee, we being defended from the fear of our enemies,",
+        "may pass our time in rest and quietness;",
+        "through the merits of Jesus Christ our Saviour. Amen."
+      ]
+    },
+    {
+      "id": "bcp-aid-against-all-perils",
+      "title": "Aid Against All Perils",
+      "author": "Book of Common Prayer, 1662",
+      "kind": "Evening",
+      "group": "BookOfCommonPrayer",
+      "themes": [
+        "Protection",
+        "Peace",
+        "Anxiety"
+      ],
+      "breathingPauseAfterLine": 0,
+      "lines": [
+        "Lighten our darkness, we beseech thee, O Lord;",
+        "and by thy great mercy defend us from all perils and dangers of this night;",
+        "for the love of thy only Son, our Saviour, Jesus Christ. Amen."
+      ]
+    },
+    {
+      "id": "bcp-general-thanksgiving",
+      "title": "A General Thanksgiving",
+      "author": "Book of Common Prayer, 1662",
+      "kind": "Thanksgiving",
+      "group": "BookOfCommonPrayer",
+      "themes": [
+        "Thanksgiving",
+        "Praise"
+      ],
+      "breathingPauseAfterLine": 5,
+      "lines": [
+        "Almighty God, Father of all mercies,",
+        "we thine unworthy servants do give thee most humble and hearty thanks",
+        "for all thy goodness and loving-kindness to us and to all men.",
+        "We bless thee for our creation, preservation, and all the blessings of this life;",
+        "but above all for thine inestimable love in the redemption of the world",
+        "by our Lord Jesus Christ, for the means of grace, and for the hope of glory.",
+        "And we beseech thee, give us that due sense of all thy mercies,",
+        "that our hearts may be unfeignedly thankful,",
+        "and that we shew forth thy praise, not only with our lips but in our lives;",
+        "by giving up ourselves to thy service,",
+        "and by walking before thee in holiness and righteousness all our days;",
+        "through Jesus Christ our Lord. Amen."
+      ]
+    },
+    {
+      "id": "bcp-prayer-of-saint-chrysostom",
+      "title": "Prayer of Saint Chrysostom",
+      "author": "Book of Common Prayer, 1662",
+      "kind": "Intercession",
+      "group": "BookOfCommonPrayer",
+      "themes": [
+        "Presence",
+        "Peace"
+      ],
+      "breathingPauseAfterLine": 3,
+      "lines": [
+        "Almighty God, who hast given us grace at this time",
+        "with one accord to make our common supplications unto thee;",
+        "and dost promise that when two or three are gathered together in thy Name",
+        "thou wilt grant their requests:",
+        "Fulfil now, O Lord, the desires and petitions of thy servants,",
+        "as may be most expedient for them;",
+        "granting us in this world knowledge of thy truth,",
+        "and in the world to come life everlasting. Amen."
+      ]
+    },
+    {
+      "id": "bcp-collect-for-grace",
+      "title": "A Collect for Grace",
+      "author": "Book of Common Prayer, 1662",
+      "kind": "Morning",
+      "group": "BookOfCommonPrayer",
+      "themes": [
+        "Guidance",
+        "Protection"
+      ],
+      "breathingPauseAfterLine": 1,
+      "lines": [
+        "O Lord, our heavenly Father, Almighty and everlasting God,",
+        "who hast safely brought us to the beginning of this day;",
+        "defend us in the same with thy mighty power;",
+        "and grant that this day we fall into no sin, neither run into any kind of danger;",
+        "but that all our doings may be ordered by thy governance,",
+        "to do always that is righteous in thy sight;",
+        "through Jesus Christ our Lord. Amen."
+      ]
+    },
+    {
+      "id": "bcp-general-confession",
+      "title": "A General Confession",
+      "author": "Book of Common Prayer, 1662",
+      "kind": "Confession",
+      "group": "BookOfCommonPrayer",
+      "themes": [
+        "Confession",
+        "Mercy"
+      ],
+      "breathingPauseAfterLine": 6,
+      "lines": [
+        "Almighty and most merciful Father;",
+        "we have erred, and strayed from thy ways like lost sheep.",
+        "We have followed too much the devices and desires of our own hearts.",
+        "We have offended against thy holy laws.",
+        "We have left undone those things which we ought to have done;",
+        "and we have done those things which we ought not to have done;",
+        "and there is no health in us.",
+        "But thou, O Lord, have mercy upon us, miserable offenders.",
+        "Spare thou them, O God, which confess their faults.",
+        "Restore thou them that are penitent;",
+        "according to thy promises declared unto mankind in Christ Jesu our Lord.",
+        "And grant, O most merciful Father, for his sake;",
+        "that we may hereafter live a godly, righteous, and sober life,",
+        "to the glory of thy holy Name. Amen."
+      ]
+    },
+    {
+      "id": "bcp-collect-for-purity",
+      "title": "A Collect for Purity",
+      "author": "Book of Common Prayer, 1662",
+      "kind": "Confession",
+      "group": "BookOfCommonPrayer",
+      "themes": [
+        "Confession",
+        "Presence"
+      ],
+      "breathingPauseAfterLine": 2,
+      "lines": [
+        "Almighty God, unto whom all hearts be open, all desires known,",
+        "and from whom no secrets are hid;",
+        "cleanse the thoughts of our hearts by the inspiration of thy Holy Spirit,",
+        "that we may perfectly love thee,",
+        "and worthily magnify thy holy Name;",
+        "through Christ our Lord. Amen."
+      ]
+    },
+    {
+      "id": "psalm-023",
+      "title": "Psalm 23",
+      "author": "Psalm 23, King James Version",
+      "kind": "Psalm",
+      "group": "Psalter",
+      "themes": [
+        "Peace",
+        "Guidance",
+        "Grief"
+      ],
+      "breathingPauseAfterLine": 6,
+      "lines": [
+        "The Lord is my shepherd; I shall not want.",
+        "He maketh me to lie down in green pastures:",
+        "he leadeth me beside the still waters.",
+        "He restoreth my soul:",
+        "he leadeth me in the paths of righteousness for his name's sake.",
+        "Yea, though I walk through the valley of the shadow of death, I will fear no evil:",
+        "for thou art with me; thy rod and thy staff they comfort me.",
+        "Thou preparest a table before me in the presence of mine enemies:",
+        "thou anointest my head with oil; my cup runneth over.",
+        "Surely goodness and mercy shall follow me all the days of my life:",
+        "and I will dwell in the house of the Lord for ever."
+      ]
+    },
+    {
+      "id": "psalm-051",
+      "title": "Psalm 51",
+      "author": "Psalm 51, King James Version",
+      "kind": "Confession",
+      "group": "Psalter",
+      "themes": [
+        "Confession",
+        "Mercy",
+        "Healing"
+      ],
+      "breathingPauseAfterLine": 8,
+      "lines": [
+        "Have mercy upon me, O God, according to thy lovingkindness:",
+        "according unto the multitude of thy tender mercies blot out my transgressions.",
+        "Wash me throughly from mine iniquity, and cleanse me from my sin.",
+        "For I acknowledge my transgressions: and my sin is ever before me.",
+        "Against thee, thee only, have I sinned, and done this evil in thy sight.",
+        "Purge me with hyssop, and I shall be clean:",
+        "wash me, and I shall be whiter than snow.",
+        "Make me to hear joy and gladness;",
+        "that the bones which thou hast broken may rejoice.",
+        "Hide thy face from my sins, and blot out all mine iniquities.",
+        "Create in me a clean heart, O God; and renew a right spirit within me.",
+        "Cast me not away from thy presence; and take not thy holy spirit from me.",
+        "Restore unto me the joy of thy salvation; and uphold me with thy free spirit."
+      ]
+    },
+    {
+      "id": "psalm-063",
+      "title": "Psalm 63",
+      "author": "Psalm 63, King James Version",
+      "kind": "Psalm",
+      "group": "Psalter",
+      "themes": [
+        "Presence",
+        "Praise"
+      ],
+      "breathingPauseAfterLine": 5,
+      "lines": [
+        "O God, thou art my God; early will I seek thee:",
+        "my soul thirsteth for thee, my flesh longeth for thee",
+        "in a dry and thirsty land, where no water is;",
+        "to see thy power and thy glory, so as I have seen thee in the sanctuary.",
+        "Because thy lovingkindness is better than life, my lips shall praise thee.",
+        "Thus will I bless thee while I live: I will lift up my hands in thy name.",
+        "My soul shall be satisfied as with marrow and fatness;",
+        "and my mouth shall praise thee with joyful lips:",
+        "when I remember thee upon my bed, and meditate on thee in the night watches.",
+        "Because thou hast been my help,",
+        "therefore in the shadow of thy wings will I rejoice.",
+        "My soul followeth hard after thee: thy right hand upholdeth me."
+      ]
+    },
+    {
+      "id": "psalm-121",
+      "title": "Psalm 121",
+      "author": "Psalm 121, King James Version",
+      "kind": "Psalm",
+      "group": "Psalter",
+      "themes": [
+        "Protection",
+        "Anxiety",
+        "Guidance"
+      ],
+      "breathingPauseAfterLine": 3,
+      "lines": [
+        "I will lift up mine eyes unto the hills, from whence cometh my help.",
+        "My help cometh from the Lord, which made heaven and earth.",
+        "He will not suffer thy foot to be moved:",
+        "he that keepeth thee will not slumber.",
+        "Behold, he that keepeth Israel shall neither slumber nor sleep.",
+        "The Lord is thy keeper: the Lord is thy shade upon thy right hand.",
+        "The sun shall not smite thee by day, nor the moon by night.",
+        "The Lord shall preserve thee from all evil: he shall preserve thy soul.",
+        "The Lord shall preserve thy going out and thy coming in,",
+        "from this time forth, and even for evermore."
+      ]
+    },
+    {
+      "id": "psalm-130",
+      "title": "Psalm 130",
+      "author": "Psalm 130, King James Version",
+      "kind": "Confession",
+      "group": "Psalter",
+      "themes": [
+        "Confession",
+        "Mercy",
+        "Grief"
+      ],
+      "breathingPauseAfterLine": 3,
+      "lines": [
+        "Out of the depths have I cried unto thee, O Lord.",
+        "Lord, hear my voice: let thine ears be attentive to the voice of my supplications.",
+        "If thou, Lord, shouldest mark iniquities, O Lord, who shall stand?",
+        "But there is forgiveness with thee, that thou mayest be feared.",
+        "I wait for the Lord, my soul doth wait, and in his word do I hope.",
+        "My soul waiteth for the Lord more than they that watch for the morning:",
+        "I say, more than they that watch for the morning.",
+        "Let Israel hope in the Lord: for with the Lord there is mercy,",
+        "and with him is plenteous redemption."
+      ]
+    },
+    {
+      "id": "psalm-139",
+      "title": "Psalm 139",
+      "author": "Psalm 139, King James Version",
+      "kind": "Meditation",
+      "group": "Psalter",
+      "themes": [
+        "Presence",
+        "Guidance"
+      ],
+      "breathingPauseAfterLine": 5,
+      "lines": [
+        "O Lord, thou hast searched me, and known me.",
+        "Thou knowest my downsitting and mine uprising,",
+        "thou understandest my thought afar off.",
+        "Thou compassest my path and my lying down,",
+        "and art acquainted with all my ways.",
+        "Such knowledge is too wonderful for me; it is high, I cannot attain unto it.",
+        "Whither shall I go from thy spirit? or whither shall I flee from thy presence?",
+        "If I ascend up into heaven, thou art there:",
+        "if I make my bed in hell, behold, thou art there.",
+        "If I take the wings of the morning,",
+        "and dwell in the uttermost parts of the sea;",
+        "even there shall thy hand lead me, and thy right hand shall hold me.",
+        "If I say, Surely the darkness shall cover me;",
+        "even the night shall be light about me.",
+        "Yea, the darkness hideth not from thee; but the night shineth as the day.",
+        "Search me, O God, and know my heart: try me, and know my thoughts:",
+        "and see if there be any wicked way in me,",
+        "and lead me in the way everlasting."
+      ]
+    },
+    {
+      "id": "scripture-lords-prayer",
+      "title": "The Lord's Prayer",
+      "author": "Matthew 6, King James Version",
+      "kind": "Morning",
+      "group": "Scripture",
+      "themes": [
+        "Mercy",
+        "Guidance",
+        "Praise"
+      ],
+      "breathingPauseAfterLine": 2,
+      "lines": [
+        "Our Father which art in heaven, hallowed be thy name.",
+        "Thy kingdom come. Thy will be done in earth, as it is in heaven.",
+        "Give us this day our daily bread.",
+        "And forgive us our debts, as we forgive our debtors.",
+        "And lead us not into temptation, but deliver us from evil:",
+        "for thine is the kingdom, and the power, and the glory, for ever. Amen."
+      ]
+    },
+    {
+      "id": "scripture-magnificat",
+      "title": "The Magnificat",
+      "author": "Luke 1, King James Version",
+      "kind": "Thanksgiving",
+      "group": "Scripture",
+      "themes": [
+        "Praise",
+        "Thanksgiving"
+      ],
+      "breathingPauseAfterLine": 4,
+      "lines": [
+        "My soul doth magnify the Lord,",
+        "and my spirit hath rejoiced in God my Saviour.",
+        "For he hath regarded the low estate of his handmaiden:",
+        "for, behold, from henceforth all generations shall call me blessed.",
+        "For he that is mighty hath done to me great things; and holy is his name.",
+        "And his mercy is on them that fear him from generation to generation.",
+        "He hath shewed strength with his arm;",
+        "he hath scattered the proud in the imagination of their hearts.",
+        "He hath put down the mighty from their seats, and exalted them of low degree.",
+        "He hath filled the hungry with good things; and the rich he hath sent empty away.",
+        "He hath holpen his servant Israel, in remembrance of his mercy."
+      ]
+    },
+    {
+      "id": "scripture-nunc-dimittis",
+      "title": "Nunc Dimittis",
+      "author": "Luke 2, King James Version",
+      "kind": "Evening",
+      "group": "Scripture",
+      "themes": [
+        "Peace",
+        "Grief"
+      ],
+      "breathingPauseAfterLine": 0,
+      "lines": [
+        "Lord, now lettest thou thy servant depart in peace, according to thy word.",
+        "For mine eyes have seen thy salvation,",
+        "which thou hast prepared before the face of all people;",
+        "a light to lighten the Gentiles, and the glory of thy people Israel."
+      ]
+    },
+    {
+      "id": "scripture-aaronic-blessing",
+      "title": "The Lord Bless Thee",
+      "author": "Numbers 6, King James Version",
+      "kind": "Blessing",
+      "group": "Scripture",
+      "themes": [
+        "Peace",
+        "Protection",
+        "Family"
+      ],
+      "breathingPauseAfterLine": 1,
+      "lines": [
+        "The Lord bless thee, and keep thee:",
+        "the Lord make his face shine upon thee, and be gracious unto thee:",
+        "the Lord lift up his countenance upon thee, and give thee peace."
+      ]
+    },
+    {
+      "id": "augustine-late-have-i-loved-you",
+      "title": "Late Have I Loved You",
+      "author": "Augustine of Hippo, Confessions X",
+      "kind": "Meditation",
+      "group": "ChurchFathers",
+      "themes": [
+        "Presence",
+        "Confession"
+      ],
+      "breathingPauseAfterLine": 5,
+      "lines": [
+        "Late have I loved you, beauty so ancient and so new;",
+        "late have I loved you.",
+        "And see, you were within me, and I was outside,",
+        "and outside I searched for you,",
+        "and upon the lovely things you had made I threw myself, deformed as I was.",
+        "You were with me, and I was not with you.",
+        "You called and cried out and broke open my deafness.",
+        "You shone and blazed and drove away my blindness.",
+        "You breathed fragrance, and I drew in my breath, and now I pant for you.",
+        "I tasted you, and now I hunger and thirst for you.",
+        "You touched me, and I burned for your peace."
+      ]
+    },
+    {
+      "id": "augustine-restless-heart",
+      "title": "Our Heart Is Restless",
+      "author": "Augustine of Hippo, Confessions I",
+      "kind": "Meditation",
+      "group": "ChurchFathers",
+      "themes": [
+        "Praise",
+        "Presence"
+      ],
+      "breathingPauseAfterLine": 5,
+      "lines": [
+        "Great are you, O Lord, and greatly to be praised;",
+        "great is your power, and your wisdom is beyond measure.",
+        "And man, who is a part of your creation, wishes to praise you —",
+        "man, who carries about with him his mortality,",
+        "the witness of his own sin.",
+        "Yet still he wishes to praise you.",
+        "You stir him to take delight in praising you,",
+        "for you have made us for yourself,",
+        "and our heart is restless until it rests in you."
+      ]
+    },
+    {
+      "id": "anselm-teach-me-to-seek-you",
+      "title": "Teach Me to Seek You",
+      "author": "Anselm of Canterbury, Proslogion",
+      "kind": "Meditation",
+      "group": "ChurchFathers",
+      "themes": [
+        "Guidance",
+        "Presence"
+      ],
+      "breathingPauseAfterLine": 3,
+      "lines": [
+        "Teach me to seek you, and reveal yourself to me as I seek;",
+        "for I cannot seek you unless you teach me,",
+        "nor find you unless you show yourself to me.",
+        "Let me seek you in longing, and long for you in seeking.",
+        "Let me find you in love, and love you in finding.",
+        "I do not try, Lord, to reach your height,",
+        "for my understanding is in no way equal to it;",
+        "but I long to understand in some measure your truth,",
+        "which my heart believes and loves.",
+        "For I do not seek to understand in order that I may believe,",
+        "but I believe in order that I may understand."
+      ]
+    },
+    {
+      "id": "aquinas-a-mind-to-know-you",
+      "title": "A Mind to Know You",
+      "author": "Thomas Aquinas",
+      "kind": "Morning",
+      "group": "ChurchFathers",
+      "themes": [
+        "Guidance",
+        "Peace"
+      ],
+      "breathingPauseAfterLine": 3,
+      "lines": [
+        "Grant me, O Lord my God, a mind to know you,",
+        "a heart to seek you, wisdom to find you,",
+        "conduct pleasing to you, faithful perseverance in waiting for you,",
+        "and a hope of finally embracing you.",
+        "Give me a steadfast heart which no unworthy affection may drag downwards;",
+        "give me an unconquered heart which no tribulation can wear out;",
+        "give me an upright heart which no unworthy purpose may tempt aside."
+      ]
+    },
+    {
+      "id": "ignatius-take-lord-and-receive",
+      "title": "Take, Lord, and Receive",
+      "author": "Ignatius of Loyola",
+      "kind": "Meditation",
+      "group": "ChurchFathers",
+      "themes": [
+        "Guidance",
+        "Peace"
+      ],
+      "breathingPauseAfterLine": 3,
+      "lines": [
+        "Take, Lord, and receive all my liberty,",
+        "my memory, my understanding, and my entire will,",
+        "all that I have and possess.",
+        "You have given all to me; to you, Lord, I return it.",
+        "Everything is yours; do with it what you will.",
+        "Give me only your love and your grace;",
+        "that is enough for me."
+      ]
+    },
+    {
+      "id": "francis-instrument-of-peace",
+      "title": "Make Me an Instrument of Your Peace",
+      "author": "Attributed to Francis of Assisi",
+      "kind": "Intercession",
+      "group": "ChurchFathers",
+      "themes": [
+        "Peace",
+        "Mercy"
+      ],
+      "breathingPauseAfterLine": 6,
+      "lines": [
+        "Lord, make me an instrument of your peace.",
+        "Where there is hatred, let me sow love;",
+        "where there is injury, pardon;",
+        "where there is doubt, faith;",
+        "where there is despair, hope;",
+        "where there is darkness, light;",
+        "where there is sadness, joy.",
+        "O divine Master, grant that I may not so much seek",
+        "to be consoled as to console;",
+        "to be understood as to understand;",
+        "to be loved as to love.",
+        "For it is in giving that we receive;",
+        "it is in pardoning that we are pardoned;",
+        "and it is in dying that we are born to eternal life."
+      ]
+    },
+    {
+      "id": "luther-morning-prayer",
+      "title": "Luther's Morning Prayer",
+      "author": "Martin Luther, Small Catechism",
+      "kind": "Morning",
+      "group": "Reformers",
+      "themes": [
+        "Protection",
+        "Thanksgiving"
+      ],
+      "breathingPauseAfterLine": 1,
+      "lines": [
+        "I thank you, my heavenly Father, through Jesus Christ your dear Son,",
+        "that you have kept me this night from all harm and danger.",
+        "Keep me this day also from sin and every evil,",
+        "that all my doings and my life may please you.",
+        "For into your hands I commend myself, my body and soul, and all things.",
+        "Let your holy angel be with me,",
+        "that the wicked one may have no power over me. Amen."
+      ]
+    },
+    {
+      "id": "luther-evening-prayer",
+      "title": "Luther's Evening Prayer",
+      "author": "Martin Luther, Small Catechism",
+      "kind": "Evening",
+      "group": "Reformers",
+      "themes": [
+        "Protection",
+        "Mercy",
+        "Peace"
+      ],
+      "breathingPauseAfterLine": 2,
+      "lines": [
+        "I thank you, my heavenly Father, through Jesus Christ your dear Son,",
+        "that you have graciously kept me this day;",
+        "and I pray that you would forgive me all my sins where I have done wrong,",
+        "and graciously keep me this night.",
+        "For into your hands I commend myself, my body and soul, and all things.",
+        "Let your holy angel be with me,",
+        "that the wicked one may have no power over me. Amen."
+      ]
+    },
+    {
+      "id": "calvin-grant-almighty-god",
+      "title": "Grant, Almighty God",
+      "author": "John Calvin",
+      "kind": "Meditation",
+      "group": "Reformers",
+      "themes": [
+        "Guidance",
+        "Praise"
+      ],
+      "breathingPauseAfterLine": 3,
+      "lines": [
+        "Grant, Almighty God, that as you have once shone upon us by your gospel,",
+        "we may ever cleave to the light of your truth,",
+        "and that no darkness may draw us aside.",
+        "Grant also that we may with a meek and teachable spirit",
+        "submit ourselves to you and to your word,",
+        "and that our faith may be nourished",
+        "until we at length are gathered into that eternal rest",
+        "which is laid up for us in heaven,",
+        "through Christ our Lord. Amen."
+      ]
+    },
+    {
+      "id": "bunyan-a-prayer-in-distress",
+      "title": "A Prayer in Distress",
+      "author": "After John Bunyan",
+      "kind": "Intercession",
+      "group": "Puritan",
+      "themes": [
+        "Anxiety",
+        "Grief",
+        "Presence"
+      ],
+      "breathingPauseAfterLine": 2,
+      "lines": [
+        "Lord, I am in the dark, and I cannot see my way.",
+        "I am weak, and my heart is a wandering thing.",
+        "Yet I have nowhere else to go but to you.",
+        "You have upheld me in worse hours than this one.",
+        "Hold me now, though I have no strength to hold you.",
+        "Let me not be afraid of what I cannot see,",
+        "for the way is yours, and you are already at the end of it."
+      ]
+    },
+    {
+      "id": "baxter-it-belongs-not-to-my-care",
+      "title": "Lord, It Belongs Not to My Care",
+      "author": "Richard Baxter",
+      "kind": "Meditation",
+      "group": "Puritan",
+      "themes": [
+        "Peace",
+        "Grief"
+      ],
+      "breathingPauseAfterLine": 3,
+      "lines": [
+        "Lord, it belongs not to my care",
+        "whether I die or live;",
+        "to love and serve thee is my share,",
+        "and this thy grace must give.",
+        "If life be long, I will be glad",
+        "that I may long obey;",
+        "if short, yet why should I be sad",
+        "to soar to endless day?",
+        "Christ leads me through no darker rooms",
+        "than he went through before;",
+        "he that into God's kingdom comes",
+        "must enter by this door."
+      ]
+    },
+    {
+      "id": "wesley-covenant-prayer",
+      "title": "A Covenant Prayer",
+      "author": "John Wesley",
+      "kind": "Morning",
+      "group": "Puritan",
+      "themes": [
+        "Guidance",
+        "Praise"
+      ],
+      "breathingPauseAfterLine": 4,
+      "lines": [
+        "I am no longer my own, but yours.",
+        "Put me to what you will, place me with whom you will.",
+        "Put me to doing, put me to suffering.",
+        "Let me be employed for you, or laid aside for you,",
+        "exalted for you, or brought low for you.",
+        "Let me be full, let me be empty.",
+        "Let me have all things, let me have nothing.",
+        "I freely and wholeheartedly yield all things to your pleasure and disposal.",
+        "And now, glorious and blessed God,",
+        "you are mine, and I am yours. So be it."
+      ]
+    },
+    {
+      "id": "patrick-christ-with-me",
+      "title": "Christ With Me",
+      "author": "Attributed to Patrick of Ireland",
+      "kind": "Morning",
+      "group": "Celtic",
+      "themes": [
+        "Protection",
+        "Presence"
+      ],
+      "breathingPauseAfterLine": 3,
+      "lines": [
+        "Christ with me, Christ before me, Christ behind me,",
+        "Christ in me, Christ beneath me, Christ above me,",
+        "Christ on my right, Christ on my left,",
+        "Christ when I lie down, Christ when I sit down, Christ when I arise.",
+        "Christ in the heart of everyone who thinks of me,",
+        "Christ in the mouth of everyone who speaks of me,",
+        "Christ in every eye that sees me,",
+        "Christ in every ear that hears me.",
+        "I arise today through a mighty strength."
+      ]
+    },
+    {
+      "id": "celtic-deep-peace",
+      "title": "Deep Peace",
+      "author": "Celtic blessing",
+      "kind": "Blessing",
+      "group": "Celtic",
+      "themes": [
+        "Peace",
+        "Healing",
+        "Family"
+      ],
+      "breathingPauseAfterLine": 3,
+      "lines": [
+        "Deep peace of the running wave to you.",
+        "Deep peace of the flowing air to you.",
+        "Deep peace of the quiet earth to you.",
+        "Deep peace of the shining stars to you.",
+        "Deep peace of the watching shepherds to you.",
+        "Deep peace of the Son of Peace to you."
+      ]
+    }
+  ]
+}

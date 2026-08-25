@@ -16,8 +16,8 @@ you love; write your own prayers. No accounts, no network, no notifications.
 | # | Task | Branch | Status |
 |---|---|---|---|
 | 1 | Project foundation — git, build wiring, Hilt root, docs | `chore/01-project-foundation` | merged, `task-01` |
-| 2 | Design system — fonts, colours, type, shared components | `feat/02-design-system` | **awaiting approval** |
-| 3 | Domain + data — models, Room, seeding, repositories, use cases | `feat/03-domain-and-data` | not started |
+| 2 | Design system — fonts, colours, type, shared components | `feat/02-design-system` | merged, `task-02` |
+| 3 | Domain + data — models, Room, seeding, repositories, use cases | `feat/03-domain-and-data` | **awaiting approval** |
 | 4 | App shell — navigation graph, pill bottom bar | `feat/04-app-shell-navigation` | not started |
 | 5 | Home screen | `feat/05-home-screen` | not started |
 | 6 | Library screen | `feat/06-library-screen` | not started |
@@ -30,6 +30,30 @@ you love; write your own prayers. No accounts, no network, no notifications.
 
 Each task is built on its own branch, verified, then **stopped for approval**. Only after approval:
 `git switch main && git merge --no-ff <branch> && git tag task-<nn>`.
+
+## Task 3 — done in this branch
+
+Everything below the UI. The visible app is still the design-system gallery, as planned.
+
+- **Domain** (pure Kotlin): `Prayer`, `PrayerGroup`/`PrayerKind`/`PrayerTheme`, `SavedLine`,
+  `PersonalPrayer`, `PrayerCollection`, `PrayerSettings`/`SessionPacing`, `Greeting`, `PrayerFilter`;
+  the four repository interfaces; the seven use cases; `util/IdGenerator`.
+- **Data**: `AbbaDatabase` v1 over seven tables (`prayers`, `prayer_lines`, `prayer_themes`,
+  `saved_lines`, `personal_prayers`, `prayer_collections`, `collection_members`), four DAOs,
+  `AbbaTypeConverters`, `mapper/PrayerMappers`, four repository implementations, `SettingsDataStore`.
+  Schema exported and committed at `app/schemas/io.abbafather.data.local.AbbaDatabase/1.json`.
+- **Seed**: `assets/prayer_catalogue.json` — 31 prayers, 280 lines, the design's 7 included. Parsed by
+  `CatalogueSeeder` in `RoomDatabase.Callback.onCreate`, guarded twice (see `docs/DECISIONS.md`).
+- **DI**: `DatabaseModule`, `RepositoryModule` (`@Binds`), `TimeModule` (`Clock`, `IdGenerator`).
+- **Tests**: 39 passing — three Robolectric DAO classes, `CatalogueSeederTest` (seeds once, the seven
+  named prayers are whole, the catalogue reads back through `PrayerRepository`), and seven use-case
+  classes against hand-written fakes.
+- `androidx.test:core` added to the version catalog for `ApplicationProvider` in unit tests.
+- Verified: `./gradlew :app:assembleDebug` and `:app:testDebugUnitTest` both pass.
+
+One thing to know: **"A Prayer in Distress" is attributed "After John Bunyan"**, not to Bunyan
+directly — the design file was not available and no verbatim text of that title could be confirmed.
+`docs/DECISIONS.md` records what to do if the design source turns up.
 
 ## Task 2 — done in this branch
 
@@ -68,44 +92,25 @@ The UI is still the untouched template "Hello Android" screen. That is expected 
 
 ## Start here for the next task
 
-### Task 3 — `feat/03-domain-and-data`
+### Task 4 — `feat/04-app-shell-navigation`
 
 ```
-git switch -c feat/03-domain-and-data main
+git switch -c feat/04-app-shell-navigation main
 ```
 
-Everything below the UI. No screen work in this task — the gallery stays as the visible app.
+The shell the screens will hang from. No screen content yet — each destination is a placeholder that
+proves the route, the argument and the bottom bar behave.
 
-**Domain** (`domain/`, pure Kotlin — no Android, Room, Compose or Hilt imports)
-- `model/`: `Prayer` (id, title, author, kind, group, themes, lines, `breathingPauseAfterLine`),
-  `PrayerGroup`, `SavedLine`, `PersonalPrayer`, `PrayerCollection`, `PrayerSettings`.
-- `repository/`: `PrayerRepository`, `SavedLineRepository`, `PersonalPrayerRepository`,
-  `SettingsRepository` — interfaces only, `Flow`-returning.
-- `usecase/`: `GetTodaysSuggestedPrayerUseCase` (deterministic by date), `GetGreetingUseCase`
-  (time of day), `SearchPrayersUseCase`, `FilterPrayersUseCase`, `SaveLineUseCase`,
-  `CreatePersonalPrayerFromLineUseCase`, `RecordPrayerOpenedUseCase`.
+- `navigation/`: `@Serializable` route types for `Home`, `Library`, `MyPrayers`, `Saved`, `Reader`,
+  `Session`, `ComposePrayer` (arguments per the table in `docs/ARCHITECTURE.md`), `AbbaNavHost`, and
+  `AbbaBottomBar` — the pill bar, sage active pill, 11sp uppercase labels, shown only on the four
+  top-level destinations.
+- Top-level tabs save and restore their back stacks:
+  `popUpTo(graph.findStartDestination().id) { saveState = true }`, `restoreState = true`,
+  `launchSingleTop = true`.
+- `MainActivity` shows `AbbaNavHost` instead of `DesignSystemGallery`; the gallery composable stays in
+  the tree for now as a preview surface but is no longer the app's content.
+- Session is full-bleed: no bottom bar, and the shell must let it own the system bars.
 
-**Data** (`data/`)
-- `local/AbbaDatabase.kt` at version 1, `exportSchema = true` (schemas land in `app/schemas/` and are
-  committed — this was already proved working in task 1).
-- `local/entity/` + `local/dao/` for catalogue prayers, prayer lines, themes, saved lines, personal
-  prayers and collections. User-owned rows carry a UUID id, `createdAt`/`updatedAt` and `isDeleted`.
-- `assets/prayer_catalogue.json` — the design's 7 prayers verbatim plus ~20–25 more public-domain
-  prayers (BCP 1662, KJV psalms, Puritan, patristic). Parsed with kotlinx-serialization and inserted
-  in a `RoomDatabase.Callback` on first create, guarded so it cannot run twice or overwrite user data.
-- `repository/` implementations mapping entities to domain models on the injected `@IoDispatcher`.
-
-**DI** (`di/`): `DatabaseModule`, `RepositoryModule` (`@Binds` interface → implementation).
-
-**Tests**: DAO tests against an in-memory database, a seeding-runs-once test, and use-case tests using
-hand-written fakes of the repository interfaces (no mocking framework — see `docs/DECISIONS.md`).
-
-**The design's 7 prayers**, needed verbatim for the seed file: `A Collect for Peace` and
-`Aid Against All Perils` and `A General Thanksgiving` (BCP 1662), `Psalm 63` (KJV),
-`Late Have I Loved You` (Augustine, Confessions X), `A Prayer in Distress` (Bunyan),
-`Prayer of Saint Chrysostom`. Their line breaks and `pause` positions are in the design source; if the
-file is not to hand, the prayers are public domain and the pause is simply the line after which the
-session rests.
-
-**Done when** `./gradlew :app:testDebugUnitTest` and `:app:assembleDebug` both pass, and the seeded
-catalogue can be read back through the repository interfaces.
+**Done when** `:app:assembleDebug` and `:app:testDebugUnitTest` pass, every route is reachable, the
+bottom bar hides on Reader/Session/Compose, and switching tabs restores each tab's scroll position.
