@@ -16,12 +16,16 @@ io.abbafather
 │   ├── local/
 │   │   ├── entity/                 Room entities (never leave this layer)
 │   │   ├── dao/                    Flow reads, suspend writes
+│   │   ├── seed/                   catalogue asset parsing, first-run seeding
 │   │   └── AbbaDatabase.kt         schema exported to app/schemas/
+│   ├── mapper/                     entity ⇄ domain model, the layer boundary
+│   ├── preferences/                DataStore, settings only
 │   └── repository/                 implements domain repository interfaces
 ├── domain/
 │   ├── model/                      Prayer, SavedLine, PersonalPrayer, Collection…
 │   ├── repository/                 interfaces only
-│   └── usecase/                    single-responsibility, operator fun invoke
+│   ├── usecase/                    single-responsibility, operator fun invoke
+│   └── util/                       IdGenerator
 ├── feature/
 │   └── <screen>/                   <Name>Screen, <Name>UiState, <Name>ViewModel
 ├── navigation/                     AbbaNavHost, routes, AbbaBottomBar
@@ -38,8 +42,9 @@ scope is genuinely needed.
 | Module | Provides |
 |---|---|
 | `CoroutinesModule` | `@IoDispatcher`, `@DefaultDispatcher`, `@ApplicationScope` |
-| `DatabaseModule` (task 3) | `AbbaDatabase` and its DAOs |
-| `RepositoryModule` (task 3) | `@Binds` domain interface → data implementation |
+| `DatabaseModule` | `AbbaDatabase`, its DAOs, the settings `DataStore` |
+| `RepositoryModule` | `@Binds` domain interface → data implementation |
+| `TimeModule` | `java.time.Clock`, `IdGenerator` |
 
 ViewModels are `@HiltViewModel` and obtained with `hiltViewModel()` at the navigation route.
 
