@@ -3,6 +3,7 @@ package io.abbafather.feature.reader
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -27,6 +28,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
@@ -51,6 +54,7 @@ import io.abbafather.domain.model.PrayerPart
 import io.abbafather.domain.model.PrayerProvenance
 import io.abbafather.domain.model.PrayerTag
 import io.abbafather.domain.model.PrayerVoice
+import io.abbafather.domain.model.ScriptureReference
 
 /**
  * Binds the ViewModel and performs every move the reader makes from here. Growing a line into a
@@ -121,6 +125,7 @@ fun ReaderScreen(
             Spacer(Modifier.height(26.dp))
             PrayerHeading(
                 prayer = prayer,
+                onAboutThisPrayer = { onAction(ReaderAction.OpenProvenance) },
                 modifier = Modifier.padding(horizontal = DocumentMargin),
             )
             Spacer(Modifier.height(30.dp))
@@ -129,6 +134,9 @@ fun ReaderScreen(
                 keptLineIndices = uiState.keptLineIndices,
                 openLineIndex = uiState.keepSheet?.lineIndex,
                 onLineSelected = { lineIndex -> onAction(ReaderAction.SelectLine(lineIndex)) },
+                onOpenScripture = { movementIndex ->
+                    onAction(ReaderAction.OpenScripture(movementIndex))
+                },
                 modifier = Modifier.padding(horizontal = DocumentMargin - LineHitAreaInset),
             )
             Spacer(Modifier.height(36.dp))
@@ -154,14 +162,22 @@ fun ReaderScreen(
         }
     }
 
+    // At most one of the three is ever non-null, so these read as one sheet slot rather than three.
     if (uiState.keepSheet != null) {
         KeepLineSheet(sheet = uiState.keepSheet, onAction = onAction)
+    }
+    if (uiState.scriptureSheet != null) {
+        ScriptureSheet(sheet = uiState.scriptureSheet, onAction = onAction)
+    }
+    if (uiState.provenanceSheet != null) {
+        ProvenanceSheet(sheet = uiState.provenanceSheet, onAction = onAction)
     }
 }
 
 @Composable
 private fun PrayerHeading(
     prayer: Prayer,
+    onAboutThisPrayer: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
@@ -175,6 +191,10 @@ private fun PrayerHeading(
             text = prayer.attribution,
             style = AbbaTheme.type.metaSans,
             color = AbbaTheme.colors.inkMeta,
+        )
+        TextActionButton(
+            text = stringResource(R.string.reader_about_this_prayer),
+            onClick = onAboutThisPrayer,
         )
     }
 }
@@ -190,6 +210,7 @@ private fun PrayerBody(
     keptLineIndices: Set<Int>,
     openLineIndex: Int?,
     onLineSelected: (Int) -> Unit,
+    onOpenScripture: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
@@ -204,11 +225,41 @@ private fun PrayerBody(
                     onClick = { onLineSelected(lineIndex) },
                 )
             }
+            if (movement.scriptures.isNotEmpty()) {
+                MovementScriptureAction(
+                    passageCount = movement.scriptures.size,
+                    onClick = { onOpenScripture(movement.index) },
+                )
+            }
             if (movement != prayer.movements.last()) {
                 BreathingPauseMark()
             }
         }
     }
+}
+
+/**
+ * What this movement rests on, offered at the end of it rather than shown inside it: the reader
+ * finishes the turn of praying first, and asks afterwards if they want to.
+ */
+@Composable
+private fun MovementScriptureAction(
+    passageCount: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val spelled = stringArrayResource(R.array.reader_movement_passages_spelled)
+    val numbered = pluralStringResource(
+        R.plurals.reader_movement_passages,
+        passageCount,
+        passageCount,
+    )
+    TextActionButton(
+        text = spelled.getOrNull(passageCount - 1) ?: numbered,
+        onClick = onClick,
+        contentColor = AbbaTheme.colors.mutedSage,
+        modifier = modifier.padding(start = LineHitAreaInset, top = 2.dp),
+    )
 }
 
 /** What this turn of the prayer is asking. Quiet enough to read past, there when you look for it. */
@@ -274,16 +325,165 @@ private fun BreathingPauseMark(modifier: Modifier = Modifier) {
  * share the line and the handle so the sheet reads as one place the reader stays in, rather than as
  * three sheets replacing each other.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun KeepLineSheet(
     sheet: KeepLineSheetUiState,
     onAction: (ReaderAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    ReaderSheet(onDismiss = { onAction(ReaderAction.DismissSheet) }, modifier = modifier) {
+        Text(
+            text = sheet.line,
+            style = AbbaTheme.type.sheetLine,
+            color = AbbaTheme.colors.ink,
+        )
+        Spacer(Modifier.height(26.dp))
+
+        when (sheet.stage) {
+            KeepLineStage.Keep -> KeepStage(sheet = sheet, onAction = onAction)
+            KeepLineStage.Kept -> KeptStage(onAction = onAction)
+            KeepLineStage.AlreadyKept -> AlreadyKeptStage(onAction = onAction)
+        }
+    }
+}
+
+/**
+ * What one movement rests on: what it holds, then each passage as a reference and the
+ * translation it was read in, with our own note on why it stands here. The verse text itself is
+ * never carried — that stays in the reader's own Bible.
+ */
+@Composable
+private fun ScriptureSheet(
+    sheet: ScriptureSheetUiState,
+    onAction: (ReaderAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = AbbaTheme.colors
+    ReaderSheet(onDismiss = { onAction(ReaderAction.DismissSheet) }, modifier = modifier) {
+        Text(
+            text = sheet.heading,
+            style = AbbaTheme.type.sheetLine,
+            color = colors.ink,
+        )
+        if (sheet.themes.isNotEmpty()) {
+            Spacer(Modifier.height(26.dp))
+            SectionLabel(text = stringResource(R.string.reader_scripture_themes))
+            sheet.themes.forEach { theme ->
+                Spacer(Modifier.height(AbbaSpacing.SectionLabelGap))
+                Text(
+                    text = theme,
+                    style = AbbaTheme.type.bodySans,
+                    color = colors.inkProse,
+                )
+            }
+        }
+        if (sheet.passages.isNotEmpty()) {
+            Spacer(Modifier.height(26.dp))
+            SectionLabel(text = stringResource(R.string.reader_scripture_passages))
+            sheet.passages.forEach { passage ->
+                Spacer(Modifier.height(AbbaSpacing.SectionLabelGap))
+                Text(
+                    // A reference is functional, so it is set in the sans face — and the serif's
+                    // old-style figures made "1 John 2:15-17" read as prose rather than as a place.
+                    text = stringResource(
+                        R.string.reader_scripture_reference,
+                        passage.reference,
+                        passage.translation,
+                    ),
+                    style = AbbaTheme.type.chipLabel,
+                    color = colors.sage,
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = passage.connection,
+                    style = AbbaTheme.type.bodySans,
+                    color = colors.inkProse,
+                )
+            }
+        }
+        Spacer(Modifier.height(20.dp))
+        SheetCloseAction(onClick = { onAction(ReaderAction.DismissSheet) })
+    }
+}
+
+/**
+ * Where this prayer came from before it was ours. The adaptation note is shown verbatim: it is the
+ * catalogue's own sentence about what was and was not carried over, and paraphrasing it here would
+ * be the app claiming something the corpus does not.
+ */
+@Composable
+private fun ProvenanceSheet(
+    sheet: ProvenanceSheetUiState,
+    onAction: (ReaderAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = AbbaTheme.colors
+    val provenance = sheet.provenance
+    ReaderSheet(onDismiss = { onAction(ReaderAction.DismissSheet) }, modifier = modifier) {
+        Text(
+            text = sheet.adaptedTitle,
+            style = AbbaTheme.type.sheetLine,
+            color = colors.ink,
+        )
+        Spacer(Modifier.height(26.dp))
+
+        SectionLabel(text = stringResource(R.string.reader_provenance_adapted_from))
+        Spacer(Modifier.height(AbbaSpacing.SectionLabelGap))
+        Text(
+            text = provenance.originalTitle,
+            style = AbbaTheme.type.collectionName,
+            color = colors.ink,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = provenance.originalAuthor,
+            style = AbbaTheme.type.metaSans,
+            color = colors.inkMeta,
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = "${provenance.originalSource}, ${provenance.originalPublicationDate}",
+            style = AbbaTheme.type.metaSans,
+            color = colors.inkMeta,
+        )
+
+        Spacer(Modifier.height(26.dp))
+        SectionLabel(text = stringResource(R.string.reader_provenance_copyright))
+        Spacer(Modifier.height(AbbaSpacing.SectionLabelGap))
+        Text(
+            text = provenance.copyrightStatus,
+            style = AbbaTheme.type.metaSans,
+            color = colors.inkMeta,
+        )
+
+        Spacer(Modifier.height(26.dp))
+        SectionLabel(text = stringResource(R.string.reader_provenance_note))
+        Spacer(Modifier.height(AbbaSpacing.SectionLabelGap))
+        Text(
+            text = provenance.adaptationNote,
+            style = AbbaTheme.type.bodySans,
+            color = colors.inkProse,
+        )
+
+        Spacer(Modifier.height(20.dp))
+        SheetCloseAction(onClick = { onAction(ReaderAction.DismissSheet) })
+    }
+}
+
+/**
+ * The one shell all three sheets are built in, so a reader who has met one has met them all. The
+ * content scrolls: forty-eight tag chips and three connection paragraphs both outgrow a phone.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ReaderSheet(
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     val colors = AbbaTheme.colors
     ModalBottomSheet(
-        onDismissRequest = { onAction(ReaderAction.DismissSheet) },
+        onDismissRequest = onDismiss,
         modifier = modifier,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         shape = AbbaShapes.BottomSheet,
@@ -292,21 +492,26 @@ private fun KeepLineSheet(
         dragHandle = { SheetHandle() },
     ) {
         Column(
-            modifier = Modifier.padding(start = 26.dp, end = 26.dp, bottom = 12.dp),
-        ) {
-            Text(
-                text = sheet.line,
-                style = AbbaTheme.type.sheetLine,
-                color = colors.ink,
-            )
-            Spacer(Modifier.height(26.dp))
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(start = 26.dp, end = 26.dp, bottom = 12.dp),
+            content = content,
+        )
+    }
+}
 
-            when (sheet.stage) {
-                KeepLineStage.Keep -> KeepStage(sheet = sheet, onAction = onAction)
-                KeepLineStage.Kept -> KeptStage(onAction = onAction)
-                KeepLineStage.AlreadyKept -> AlreadyKeptStage(onAction = onAction)
-            }
-        }
+/** The way out of a sheet that only tells the reader something. */
+@Composable
+private fun SheetCloseAction(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        TextActionButton(
+            text = stringResource(R.string.reader_sheet_close),
+            onClick = onClick,
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+        )
     }
 }
 
@@ -350,7 +555,15 @@ private fun KeepStage(
                 )
             }
         }
-        Spacer(Modifier.height(26.dp))
+        if (sheet.canShowMoreTags) {
+            TextActionButton(
+                text = stringResource(R.string.reader_sheet_more_tags),
+                onClick = { onAction(ReaderAction.ShowMoreTags) },
+            )
+            Spacer(Modifier.height(14.dp))
+        } else {
+            Spacer(Modifier.height(26.dp))
+        }
         SheetActions(
             primaryText = stringResource(R.string.reader_sheet_keep_line),
             onPrimary = { onAction(ReaderAction.KeepLine) },
@@ -478,6 +691,17 @@ private val previewPrayer = Prayer(
                 "Thank you for the gift of another morning.",
             ),
             firstLineIndex = 0,
+            themes = listOf(
+                "Mercy is not owed; a morning is a gift renewed rather than a day earned.",
+            ),
+            scriptures = listOf(
+                ScriptureReference(
+                    reference = "Lamentations 3:22-23",
+                    translation = "ESV",
+                    connection = "The mercies that are new every morning are the ground " +
+                        "of waking thankful rather than anxious.",
+                ),
+            ),
         ),
         PrayerMovement(
             index = 1,
@@ -487,6 +711,15 @@ private val previewPrayer = Prayer(
                 "Let it matter for my soul.",
             ),
             firstLineIndex = 2,
+            themes = listOf("A day is spent either for the soul or merely got through."),
+            scriptures = listOf(
+                ScriptureReference(
+                    reference = "Psalm 90:12",
+                    translation = "ESV",
+                    connection = "Numbering our days is what turns a morning into a prayer " +
+                        "for wisdom.",
+                ),
+            ),
         ),
     ),
     provenance = PrayerProvenance(

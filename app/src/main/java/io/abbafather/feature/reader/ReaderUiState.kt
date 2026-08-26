@@ -2,17 +2,21 @@ package io.abbafather.feature.reader
 
 import androidx.compose.runtime.Immutable
 import io.abbafather.domain.model.Prayer
+import io.abbafather.domain.model.PrayerProvenance
 import io.abbafather.domain.model.PrayerTag
+import io.abbafather.domain.model.ScriptureReference
 
 /**
- * The prayer read whole, plus whatever the keep-a-line sheet is currently saying. [keepSheet] is
- * null exactly when no sheet is open, so the screen never has to ask a second question about it.
+ * The prayer read whole, plus whichever sheet is currently open over it. At most one of the three
+ * sheet fields is ever non-null, so the screen never has to decide which of two sheets wins.
  */
 @Immutable
 data class ReaderUiState(
     val prayer: Prayer? = null,
     val keptLineIndices: Set<Int> = emptySet(),
     val keepSheet: KeepLineSheetUiState? = null,
+    val scriptureSheet: ScriptureSheetUiState? = null,
+    val provenanceSheet: ProvenanceSheetUiState? = null,
     val isLoaded: Boolean = false,
 )
 
@@ -26,6 +30,8 @@ data class KeepLineSheetUiState(
     val lineIndex: Int,
     val line: String,
     val tagChips: List<KeepTagChip> = emptyList(),
+    /** True while [tagChips] is the prayer's own tags alone and the rest are still hidden. */
+    val canShowMoreTags: Boolean = false,
 )
 
 enum class KeepLineStage {
@@ -42,6 +48,25 @@ enum class KeepLineStage {
 @Immutable
 data class KeepTagChip(val tag: PrayerTag, val isSelected: Boolean)
 
+/**
+ * What one movement rests on: what it holds theologically, and the passages it was written from.
+ * Asked for from the end of the movement, never shown while the prayer is being read.
+ */
+@Immutable
+data class ScriptureSheetUiState(
+    val movementIndex: Int,
+    val heading: String,
+    val themes: List<String>,
+    val passages: List<ScriptureReference>,
+)
+
+/** Where this prayer came from before it was ours, said plainly. */
+@Immutable
+data class ProvenanceSheetUiState(
+    val adaptedTitle: String,
+    val provenance: PrayerProvenance,
+)
+
 /** What the reader can do while reading a prayer. */
 sealed interface ReaderAction {
 
@@ -52,9 +77,13 @@ sealed interface ReaderAction {
     /** Tapping a line opens the sheet on it. */
     data class SelectLine(val lineIndex: Int) : ReaderAction
 
+    /** Closes whichever sheet is open. */
     data object DismissSheet : ReaderAction
 
     data class ToggleTag(val tag: PrayerTag) : ReaderAction
+
+    /** Widens the keep sheet's chips from the prayer's own tags to the whole vocabulary. */
+    data object ShowMoreTags : ReaderAction
 
     data object KeepLine : ReaderAction
 
@@ -63,6 +92,12 @@ sealed interface ReaderAction {
 
     /** "Make it my prayer" — the kept line becomes the opening of something the reader writes. */
     data object GrowIntoPrayer : ReaderAction
+
+    /** The passages under one movement, asked for from the end of it. */
+    data class OpenScripture(val movementIndex: Int) : ReaderAction
+
+    /** "About this prayer", beside the byline. */
+    data object OpenProvenance : ReaderAction
 }
 
 /**
