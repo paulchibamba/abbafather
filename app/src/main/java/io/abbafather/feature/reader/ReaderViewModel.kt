@@ -25,11 +25,13 @@ import java.time.Clock
 import javax.inject.Inject
 
 /**
- * Reads one catalogue prayer whole and owns the keep-a-line sheet over it.
+ * Reads one catalogue prayer whole and owns the three sheets that open over it: keeping a line, the
+ * passages under a movement, and where the prayer came from.
  *
- * Everything the sheet is — which line it is open on, which of the three things it is saying, and
- * which themes are ticked — lives in [SavedStateHandle], so a rotation with the sheet open comes
- * back with the same sheet on the same line rather than dropping the reader back into the prayer.
+ * Everything a sheet is — which line or movement it is open on, which of the three things the keep
+ * sheet is saying, which tags are ticked and whether the whole vocabulary is showing — lives in
+ * [SavedStateHandle], so a rotation with a sheet open comes back with the same sheet rather than
+ * dropping the reader back into the prayer.
  */
 @HiltViewModel
 class ReaderViewModel @Inject constructor(
@@ -50,11 +52,20 @@ class ReaderViewModel @Inject constructor(
         "ReaderViewModel was built without a $PrayerIdKey argument"
     }
 
-    private val openLineIndex: StateFlow<Int> = savedStateHandle.getStateFlow(OpenLineKey, NoLineOpen)
-    private val sheetStage: StateFlow<String> = savedStateHandle.getStateFlow(StageKey, "")
-    private val selectedTagNames: Flow<List<String>> = savedStateHandle
-        .getStateFlow(SelectedTagsKey, "")
-        .map { names -> names.split(NameSeparator).filter(String::isNotEmpty) }
+    private val keepSheetKeys: Flow<KeepSheetKeys> = combine(
+        savedStateHandle.getStateFlow(OpenLineKey, NoLineOpen),
+        savedStateHandle.getStateFlow(StageKey, ""),
+        savedStateHandle.getStateFlow(SelectedTagsKey, "")
+            .map { names -> names.split(NameSeparator).filter(String::isNotEmpty) },
+        savedStateHandle.getStateFlow(ShowAllTagsKey, false),
+        ::KeepSheetKeys,
+    )
+
+    private val metadataSheetKeys: Flow<MetadataSheetKeys> = combine(
+        savedStateHandle.getStateFlow(OpenScriptureMovementKey, NoMovementOpen),
+        savedStateHandle.getStateFlow(ProvenanceOpenKey, false),
+        ::MetadataSheetKeys,
+    )
 
     private val keptLines: Flow<List<SavedLine>> = savedLineRepository.observeSavedLines()
         .map { savedLines -> savedLines.filter { it.sourcePrayerId == prayerId } }
@@ -65,15 +76,18 @@ class ReaderViewModel @Inject constructor(
     val uiState: StateFlow<ReaderUiState> = combine(
         prayerRepository.observePrayer(prayerId),
         keptLines,
-        openLineIndex,
-        sheetStage,
-        selectedTagNames,
-    ) { prayer, keptLines, openLineIndex, stageName, tagNames ->
+        keepSheetKeys,
+        metadataSheetKeys,
+    ) { prayer, keptLines, keepKeys, metadataKeys ->
         val keptLineIndices = keptLines.mapNotNullTo(mutableSetOf()) { it.sourceLineIndex }
         ReaderUiState(
             prayer = prayer,
             keptLineIndices = keptLineIndices,
-            keepSheet = prayer?.keepSheetOrNull(openLineIndex, stageName, tagNames),
+            keepSheet = prayer?.keepSheetOrNull(keepKeys),
+            scriptureSheet = prayer?.scriptureSheetOrNull(metadataKeys.scriptureMovementIndex),
+            provenanceSheet = prayer?.takeIf { metadataKeys.isProvenanceOpen }?.let { open ->
+                ProvenanceSheetUiState(adaptedTitle = open.title, provenance = open.provenance)
+            },
             isLoaded = prayer != null,
         )
     }.stateIn(
@@ -85,11 +99,14 @@ class ReaderViewModel @Inject constructor(
     fun onAction(action: ReaderAction) {
         when (action) {
             is ReaderAction.SelectLine -> openSheetOn(action.lineIndex)
-            ReaderAction.DismissSheet -> closeSheet()
+            ReaderAction.DismissSheet -> closeSheets()
             is ReaderAction.ToggleTag -> toggleTag(action.tag)
+            ReaderAction.ShowMoreTags -> savedStateHandle[ShowAllTagsKey] = true
             ReaderAction.KeepLine -> keepOpenLine()
             ReaderAction.ReleaseKeptLine -> releaseOpenLine()
             ReaderAction.GrowIntoPrayer -> growOpenLineIntoPrayer()
+            is ReaderAction.OpenScripture -> openScriptureOn(action.movementIndex)
+            ReaderAction.OpenProvenance -> openProvenance()
             // Both belong to the navigator alone; the ViewModel keeps no record of leaving.
             ReaderAction.Back, ReaderAction.PrayThis -> Unit
         }
@@ -105,6 +122,7 @@ class ReaderViewModel @Inject constructor(
         } else {
             KeepLineStage.Keep
         }
+        closeSheets()
         savedStateHandle[OpenLineKey] = lineIndex
         savedStateHandle[StageKey] = stage.name
         // A fresh sheet starts ticked with the prayer's own themes, which is what keeping it plain
@@ -115,10 +133,23 @@ class ReaderViewModel @Inject constructor(
             .joinToString(NameSeparator) { it.name }
     }
 
-    private fun closeSheet() {
+    private fun openScriptureOn(movementIndex: Int) {
+        closeSheets()
+        savedStateHandle[OpenScriptureMovementKey] = movementIndex
+    }
+
+    private fun openProvenance() {
+        closeSheets()
+        savedStateHandle[ProvenanceOpenKey] = true
+    }
+
+    private fun closeSheets() {
         savedStateHandle[OpenLineKey] = NoLineOpen
         savedStateHandle[StageKey] = ""
         savedStateHandle[SelectedTagsKey] = ""
+        savedStateHandle[ShowAllTagsKey] = false
+        savedStateHandle[OpenScriptureMovementKey] = NoMovementOpen
+        savedStateHandle[ProvenanceOpenKey] = false
     }
 
     private fun toggleTag(tag: PrayerTag) {
@@ -150,7 +181,7 @@ class ReaderViewModel @Inject constructor(
             savedLineFor(lineIndex)?.let { savedLine ->
                 savedLineRepository.deleteSavedLine(savedLine.id, deletedAt = clock.millis())
             }
-            closeSheet()
+            closeSheets()
         }
     }
 
@@ -163,7 +194,7 @@ class ReaderViewModel @Inject constructor(
         viewModelScope.launch {
             val savedLine = savedLineFor(lineIndex) ?: return@launch
             val personalPrayer = createPersonalPrayerFromLine(savedLine)
-            closeSheet()
+            closeSheets()
             _events.send(ReaderEvent.OpenComposedPrayer(personalPrayer.id))
         }
     }
@@ -173,28 +204,64 @@ class ReaderViewModel @Inject constructor(
             it.sourcePrayerId == prayerId && it.sourceLineIndex == lineIndex
         }
 
-    private fun Prayer.keepSheetOrNull(
-        openLineIndex: Int,
-        stageName: String,
-        tagNames: List<String>,
-    ): KeepLineSheetUiState? {
-        if (openLineIndex !in lines.indices) return null
-        val stage = KeepLineStage.entries.firstOrNull { it.name == stageName } ?: return null
+    private fun Prayer.keepSheetOrNull(keys: KeepSheetKeys): KeepLineSheetUiState? {
+        if (keys.lineIndex !in lines.indices) return null
+        val stage = KeepLineStage.entries.firstOrNull { it.name == keys.stageName } ?: return null
+        val offered = offeredTags(keys.isShowingAllTags)
         return KeepLineSheetUiState(
             stage = stage,
-            lineIndex = openLineIndex,
-            line = lines[openLineIndex],
-            // The prayer's own tags, ticked as they came. Task 9 gives the reader the rest.
-            tagChips = tags.map { tag -> KeepTagChip(tag = tag, isSelected = tag.name in tagNames) },
+            lineIndex = keys.lineIndex,
+            line = lines[keys.lineIndex],
+            tagChips = offered.map { tag ->
+                KeepTagChip(tag = tag, isSelected = tag.name in keys.tagNames)
+            },
+            canShowMoreTags = offered.size < PrayerTag.entries.size,
         )
     }
+
+    /**
+     * The prayer's own tags, which is all the sheet offers until the reader asks for more. "More
+     * tags" widens it to the whole vocabulary with the prayer's own still first — those are what
+     * the reader is looking for, and the rest are there for the line that means something the
+     * prayer as a whole does not.
+     */
+    private fun Prayer.offeredTags(isShowingAllTags: Boolean): List<PrayerTag> {
+        val own = PrayerTag.entries.filter { it in tags }
+        return if (isShowingAllTags) own + PrayerTag.entries.filterNot { it in tags } else own
+    }
+
+    private fun Prayer.scriptureSheetOrNull(movementIndex: Int): ScriptureSheetUiState? {
+        val movement = movements.getOrNull(movementIndex) ?: return null
+        return ScriptureSheetUiState(
+            movementIndex = movement.index,
+            heading = movement.heading,
+            themes = movement.themes,
+            passages = movement.scriptures,
+        )
+    }
+
+    private data class KeepSheetKeys(
+        val lineIndex: Int,
+        val stageName: String,
+        val tagNames: List<String>,
+        val isShowingAllTags: Boolean,
+    )
+
+    private data class MetadataSheetKeys(
+        val scriptureMovementIndex: Int,
+        val isProvenanceOpen: Boolean,
+    )
 
     private companion object {
         const val PrayerIdKey = "prayerId"
         const val OpenLineKey = "readerOpenLineIndex"
         const val StageKey = "readerKeepSheetStage"
         const val SelectedTagsKey = "readerSelectedTags"
+        const val ShowAllTagsKey = "readerShowAllTags"
+        const val OpenScriptureMovementKey = "readerOpenScriptureMovement"
+        const val ProvenanceOpenKey = "readerProvenanceOpen"
         const val NameSeparator = ","
         const val NoLineOpen = -1
+        const val NoMovementOpen = -1
     }
 }

@@ -119,14 +119,17 @@ class ReaderViewModelTest {
         viewModel.loadedStates.test {
             skipItems(1)
             viewModel.onAction(ReaderAction.SelectLine(1))
-            skipItems(1)
+            awaitStateWhere { it.keepSheet != null }
             viewModel.onAction(ReaderAction.ToggleTag(PrayerTag.MorningAndEvening))
-            skipItems(1)
+            awaitStateWhere { uiState ->
+                uiState.keepSheet!!.tagChips.none {
+                    it.isSelected && it.tag == PrayerTag.MorningAndEvening
+                }
+            }
 
             viewModel.onAction(ReaderAction.KeepLine)
 
-            val uiState = awaitItem()
-            assertEquals(KeepLineStage.Kept, uiState.keepSheet?.stage)
+            val uiState = awaitStateWhere { it.keepSheet?.stage == KeepLineStage.Kept }
             assertTrue(1 in uiState.keptLineIndices)
 
             val savedLine = savedLineRepository.storedLines.single()
@@ -239,6 +242,190 @@ class ReaderViewModelTest {
                 setOf(PrayerTag.MorningAndEvening),
                 sheet?.tagChips?.filter { it.isSelected }?.map { it.tag }?.toSet(),
             )
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `more tags widens the keep sheet from the prayer's own tags to the whole vocabulary`() =
+        runTest {
+            val viewModel = viewModel()
+
+            viewModel.loadedStates.test {
+                skipItems(1)
+                viewModel.onAction(ReaderAction.SelectLine(0))
+                val narrow = awaitStateWhere { it.keepSheet != null }.keepSheet!!
+                assertEquals(prayer.tags.toList(), narrow.tagChips.map { it.tag })
+                assertTrue(narrow.canShowMoreTags)
+
+                viewModel.onAction(ReaderAction.ShowMoreTags)
+
+                val wide = awaitStateWhere { it.keepSheet?.canShowMoreTags == false }.keepSheet!!
+                assertEquals(PrayerTag.entries.size, wide.tagChips.size)
+                // The prayer's own still come first — those are the ones the reader is looking for.
+                assertEquals(
+                    prayer.tags.toList(),
+                    wide.tagChips.take(prayer.tags.size).map { it.tag },
+                )
+                assertEquals(PrayerTag.entries.toSet(), wide.tagChips.map { it.tag }.toSet())
+                assertEquals(
+                    prayer.tags,
+                    wide.tagChips.filter { it.isSelected }.map { it.tag }.toSet(),
+                )
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `a tag ticked from the wider vocabulary is kept with the line`() = runTest {
+        val viewModel = viewModel()
+
+        viewModel.loadedStates.test {
+            skipItems(1)
+            viewModel.onAction(ReaderAction.SelectLine(0))
+            awaitStateWhere { it.keepSheet != null }
+            viewModel.onAction(ReaderAction.ShowMoreTags)
+            awaitStateWhere { it.keepSheet?.canShowMoreTags == false }
+
+            viewModel.onAction(ReaderAction.ToggleTag(PrayerTag.Thanksgiving))
+            awaitStateWhere { uiState ->
+                uiState.keepSheet!!.tagChips.any {
+                    it.tag == PrayerTag.Thanksgiving && it.isSelected
+                }
+            }
+            viewModel.onAction(ReaderAction.KeepLine)
+            awaitStateWhere { it.keepSheet?.stage == KeepLineStage.Kept }
+
+            assertEquals(
+                prayer.tags + PrayerTag.Thanksgiving,
+                savedLineRepository.storedLines.single().tags,
+            )
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `nothing but the prayer is open until a sheet is asked for`() = runTest {
+        viewModel().loadedStates.test {
+            val uiState = awaitItem()
+
+            assertNull(uiState.keepSheet)
+            assertNull(uiState.scriptureSheet)
+            assertNull(uiState.provenanceSheet)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a movement's passages open with what it holds and what it rests on`() = runTest {
+        val viewModel = viewModel()
+
+        viewModel.loadedStates.test {
+            skipItems(1)
+            viewModel.onAction(ReaderAction.OpenScripture(1))
+
+            val sheet = awaitStateWhere { it.scriptureSheet != null }.scriptureSheet!!
+            val movement = prayer.movements[1]
+            assertEquals(1, sheet.movementIndex)
+            assertEquals(movement.heading, sheet.heading)
+            assertEquals(movement.themes, sheet.themes)
+            assertEquals(movement.scriptures, sheet.passages)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `about this prayer opens on where the prayer came from`() = runTest {
+        val viewModel = viewModel()
+
+        viewModel.loadedStates.test {
+            skipItems(1)
+            viewModel.onAction(ReaderAction.OpenProvenance)
+
+            val sheet = awaitStateWhere { it.provenanceSheet != null }.provenanceSheet!!
+            assertEquals(prayer.title, sheet.adaptedTitle)
+            assertEquals(prayer.provenance, sheet.provenance)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `opening one sheet closes whichever sheet was open`() = runTest {
+        val viewModel = viewModel()
+
+        viewModel.loadedStates.test {
+            skipItems(1)
+            viewModel.onAction(ReaderAction.OpenProvenance)
+            awaitStateWhere { it.provenanceSheet != null }
+
+            viewModel.onAction(ReaderAction.OpenScripture(0))
+            val overScripture = awaitStateWhere { it.scriptureSheet != null }
+            assertNull(overScripture.provenanceSheet)
+
+            viewModel.onAction(ReaderAction.SelectLine(0))
+            val overKeep = awaitStateWhere { it.keepSheet != null }
+            assertNull(overKeep.scriptureSheet)
+            assertNull(overKeep.provenanceSheet)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `both metadata sheets survive a rotation`() = runTest {
+        val scriptureHandle = SavedStateHandle(mapOf("prayerId" to prayer.id))
+        val readingScripture = viewModel(scriptureHandle)
+        readingScripture.loadedStates.test {
+            skipItems(1)
+            readingScripture.onAction(ReaderAction.OpenScripture(1))
+            awaitStateWhere { it.scriptureSheet != null }
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        viewModel(scriptureHandle).loadedStates.test {
+            val sheet = awaitStateWhere { it.scriptureSheet != null }.scriptureSheet!!
+            assertEquals(prayer.movements[1].heading, sheet.heading)
+            assertEquals(prayer.movements[1].scriptures, sheet.passages)
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        val provenanceHandle = SavedStateHandle(mapOf("prayerId" to prayer.id))
+        val readingProvenance = viewModel(provenanceHandle)
+        readingProvenance.loadedStates.test {
+            skipItems(1)
+            readingProvenance.onAction(ReaderAction.OpenProvenance)
+            awaitStateWhere { it.provenanceSheet != null }
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        viewModel(provenanceHandle).loadedStates.test {
+            assertEquals(
+                prayer.provenance,
+                awaitStateWhere { it.provenanceSheet != null }.provenanceSheet?.provenance,
+            )
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    /** The whole vocabulary showing is part of the sheet, so it has to come back with it. */
+    @Test
+    fun `the widened tag picker survives a rotation`() = runTest {
+        val savedStateHandle = SavedStateHandle(mapOf("prayerId" to prayer.id))
+        val before = viewModel(savedStateHandle)
+
+        before.loadedStates.test {
+            skipItems(1)
+            before.onAction(ReaderAction.SelectLine(1))
+            awaitStateWhere { it.keepSheet != null }
+            before.onAction(ReaderAction.ShowMoreTags)
+            awaitStateWhere { it.keepSheet?.canShowMoreTags == false }
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        viewModel(savedStateHandle).loadedStates.test {
+            val sheet = awaitStateWhere { it.keepSheet != null }.keepSheet!!
+
+            assertEquals(PrayerTag.entries.size, sheet.tagChips.size)
+            assertFalse(sheet.canShowMoreTags)
             cancelAndIgnoreRemainingEvents()
         }
     }

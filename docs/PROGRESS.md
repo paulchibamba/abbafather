@@ -23,7 +23,7 @@ you love; write your own prayers. No accounts, no network, no notifications.
 | 6 | Library screen | `feat/06-library-screen` | merged, `task-06` |
 | 7 | Reader + keep-a-line bottom sheet | `feat/07-reader-and-keep-line-sheet` | merged, `task-07` |
 | 8 | Catalogue rebuild — the Valley of Vision corpus, schema v2 | `feat/08-catalogue-rebuild` | merged, `task-08` |
-| 9 | Reader metadata — scripture and provenance sheets | `feat/09-reader-metadata` | not started |
+| 9 | Reader metadata — scripture and provenance sheets | `feat/09-reader-metadata` | built, awaiting approval |
 | 10 | Prayer session — movement-aware | `feat/10-prayer-session` | not started |
 | 11 | Saved screen | `feat/11-saved-screen` | not started |
 | 12 | My prayers screen | `feat/12-my-prayers-screen` | not started |
@@ -35,6 +35,51 @@ old tasks 8–12 became 10–14; tasks 8 and 9 are new. See `docs/DECISIONS.md` 
 
 Each task is built on its own branch, verified, then **stopped for approval**. Only after approval:
 `git switch main && git merge --no-ff <branch> && git tag task-<nn>`.
+
+## Task 9 — built, awaiting approval
+
+The quiet surfaces for what the corpus carries. Nothing new appears on the reading surface until it
+is asked for: two small text actions, and everything else stays in a sheet.
+
+- `feature/reader/ReaderUiState.kt` — `ScriptureSheetUiState` (movement index, heading, themes,
+  passages) and `ProvenanceSheetUiState` (the adapted title and the prayer's `PrayerProvenance`) join
+  `KeepLineSheetUiState`, which gains `canShowMoreTags`. New actions: `OpenScripture(movementIndex)`,
+  `OpenProvenance` and `ShowMoreTags`; `DismissSheet` now closes whichever sheet is open.
+- `feature/reader/ReaderViewModel.kt` — three new `SavedStateHandle` keys
+  (`readerOpenScriptureMovement`, `readerProvenanceOpen`, `readerShowAllTags`) beside the three the
+  keep sheet already owned, so both new sheets and the widened tag picker survive a rotation the way
+  the keep sheet does. The six keys are folded into two small key records so the `uiState` combine
+  stays inside its five-flow limit. Opening any sheet closes the others first — at most one of the
+  three state fields is ever non-null, so the screen never has to decide which sheet wins.
+- `feature/reader/ReaderScreen.kt` — `ReaderSheet` is now the one shell all three sheets are built
+  in (36-radius top, `ink @ .2` handle, `ink @ .4` scrim, oat ground), and its content scrolls:
+  48 tag chips and three connection paragraphs both outgrow a phone. `ScriptureSheet` shows the
+  movement's heading at 24/1.5, what it holds, then each passage as `Isaiah 57:15 · ESV` in sage with
+  its connection beneath. `ProvenanceSheet` shows the adapted title, then the original title, Arthur
+  Bennett, the Banner of Truth source and 1975, the copyright line, and the adaptation note verbatim.
+  A muted-sage "Three passages" action sits at the end of each movement, and "About this prayer"
+  under the byline. A reference is set in the sans face, because it is functional and because the
+  serif's old-style figures made "1 John 2:15-17" read as prose rather than as a place; the count is
+  spelled out from a five-item `string-array`, with the numeric plural behind it for a sixth passage
+  some later prayer might carry.
+- The keep sheet's chips are the prayer's own tags, with "More tags" widening them to all 48 — the
+  prayer's own still first, because those are the ones the reader is looking for.
+- Nine reader strings, one plural and one string-array added to `strings.xml`.
+- **Tests**: 95 passing (8 new). `ReaderViewModelTest` covers nothing being open until it is asked
+  for, a movement's passages arriving with its heading and themes, "About this prayer" arriving with
+  the prayer's provenance, opening one sheet closing whichever was open, both metadata sheets
+  surviving a rotation, "More tags" widening the picker with the prayer's own tags still first, that
+  widening surviving a rotation, and a tag ticked from the wider vocabulary being kept with the line.
+  One older test that counted emissions now waits for the state it is talking about, because the
+  keep sheet's keys are folded through one more combine than they were.
+- Verified: `:app:assembleDebug` and `:app:testDebugUnitTest` pass, and on a Pixel 8 emulator (API
+  33) — "About this prayer" opens on the original title, Arthur Bennett, the Banner of Truth source
+  and 1975, the copyright line and the adaptation note; "Three passages" at the end of a movement
+  opens on what the movement holds and its three references with their connections; both survive a
+  rotation into landscape with the same sheet on the same movement; "More tags" widens the picker to
+  all 48 with the prayer's seven still first and ticked, and the sheet scrolls to reach "Keep this
+  line". The spelled count and the sans references were then checked again on a Galaxy Note 10+.
+  The reading surface itself is unchanged but for the two small text actions.
 
 ## Task 8 — done and merged
 
@@ -262,30 +307,6 @@ directly — the design file was not available and no verbatim text of that titl
 The UI is still the untouched template "Hello Android" screen. That is expected at this point.
 
 ## Start here for the next task
-
-### Task 9 — `feat/09-reader-metadata`
-
-```
-git switch -c feat/09-reader-metadata main
-```
-
-The quiet surfaces for what the corpus carries, all on tap, none of it in the way of praying:
-
-- **Scripture sheet** — a small text action at the end of each movement ("Three passages") opens a
-  `ModalBottomSheet` built like the keep-a-line sheet in `feature/reader/ReaderScreen.kt`: the
-  movement's heading, its theological themes, then each reference set as `Isaiah 57:15 · ESV` with
-  its connection paragraph beneath.
-- **Provenance sheet** — an "About this prayer" action beside the byline: the adapted title against
-  the original, Arthur Bennett and Banner of Truth 1975, the copyright line, and the adaptation note
-  verbatim.
-- **Tag picker** — the keep-a-line sheet shows the prayer's own tags ticked plus a "More tags" action
-  revealing the other 48.
-- Movement headings get their final voice; both new sheets keep their state in the `SavedStateHandle`
-  keys `ReaderViewModel` already owns, so they survive a rotation as the keep sheet does.
-
-**Done when** `:app:assembleDebug` and `:app:testDebugUnitTest` pass, both sheets match
-`docs/DESIGN_SYSTEM.md`, each survives a rotation, and nothing new appears on the reading surface
-until it is asked for.
 
 ### Task 10 — `feat/10-prayer-session`
 

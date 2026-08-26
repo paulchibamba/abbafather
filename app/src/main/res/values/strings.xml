@@ -45,6 +45,33 @@
     <string name="reader_sheet_make_it_mine">Make it my prayer</string>
     <string name="reader_sheet_release">Let it go</string>
     <string name="reader_sheet_done">Done</string>
+    <string name="reader_sheet_more_tags">More tags</string>
+    <string name="reader_about_this_prayer">About this prayer</string>
+    <string name="reader_scripture_themes">What this movement holds</string>
+    <string name="reader_scripture_passages">Passages</string>
+    <string name="reader_scripture_reference">%1$s · %2$s</string>
+    <string name="reader_provenance_adapted_from">Adapted from</string>
+    <string name="reader_provenance_copyright">Copyright</string>
+    <string name="reader_provenance_note">About this adaptation</string>
+    <string name="reader_sheet_close">Close</string>
+
+    <!--
+      A prayer rests on one to five passages, and a count that small reads better spelled. The
+      plural below carries anything the array does not reach, so a sixth passage in some later
+      prayer still says something sensible.
+    -->
+    <string-array name="reader_movement_passages_spelled">
+        <item>One passage</item>
+        <item>Two passages</item>
+        <item>Three passages</item>
+        <item>Four passages</item>
+        <item>Five passages</item>
+    </string-array>
+
+    <plurals name="reader_movement_passages">
+        <item quantity="one">%1$d passage</item>
+        <item quantity="other">%1$d passages</item>
+    </plurals>
 
     <plurals name="library_matching_prayers">
         <item quantity="one">%1$d prayer</item>
