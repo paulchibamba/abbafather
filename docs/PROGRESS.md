@@ -24,7 +24,7 @@ you love; write your own prayers. No accounts, no network, no notifications.
 | 7 | Reader + keep-a-line bottom sheet | `feat/07-reader-and-keep-line-sheet` | merged, `task-07` |
 | 8 | Catalogue rebuild — the Valley of Vision corpus, schema v2 | `feat/08-catalogue-rebuild` | merged, `task-08` |
 | 9 | Reader metadata — scripture and provenance sheets | `feat/09-reader-metadata` | merged, `task-09` |
-| 10 | Prayer session — movement-aware | `feat/10-prayer-session` | not started |
+| 10 | Prayer session — movement-aware | `feat/10-prayer-session` | built, awaiting approval |
 | 11 | Saved screen | `feat/11-saved-screen` | not started |
 | 12 | My prayers screen | `feat/12-my-prayers-screen` | not started |
 | 13 | Compose prayer screen | `feat/13-compose-prayer-screen` | not started |
@@ -35,6 +35,53 @@ old tasks 8–12 became 10–14; tasks 8 and 9 are new. See `docs/DECISIONS.md` 
 
 Each task is built on its own branch, verified, then **stopped for approval**. Only after approval:
 `git switch main && git merge --no-ff <branch> && git tag task-<nn>`.
+
+## Task 10 — built, awaiting approval
+
+The session, replacing its placeholder. The phone stops looking like an app: deep forest to all four
+edges, one line at a time, and a rest at every movement boundary.
+
+- `feature/session/SessionUiState.kt` — `SessionUiState` (title, attribution, `movementLines`,
+  a nullable `breathingPause`, `movementTicks`, `canGoBack`, `isAtEnd`, `autoAdvanceAfterMillis`,
+  `keepsScreenOn`), `SessionLine`, `BreathingPauseUiState`, `MovementTick`
+  (`Spent` / `Current` / `ToCome`) and `SessionAction` (`Advance`, `GoBack`, `Leave`, `Amen`).
+- `feature/session/SessionViewModel.kt` — the position is a **step** index in `SavedStateHandle`, not
+  a line index, so a rotation taken at a pause comes back to the pause; see `docs/DECISIONS.md`. The
+  steps — every line, with a rest between each movement and the next — are derived from `movements`
+  on demand. The prayer is held as its own `StateFlow` because moving needs to know how many steps
+  there are. Pacing comes from `SettingsRepository`, and the last step carries no dwell so the end of
+  the prayer never times out from under "Amen".
+- `feature/session/SessionScreen.kt` — `SessionScreen` (stateless, previewed on a line and on a
+  pause) and `SessionRoute`. The translucent 44h leave button, the title and byline, then one moss
+  tick per **movement** — twenty-nine would be noise. The stage is the current movement at 30/1.42
+  with earlier lines at `oat @ .38`, arriving on the design's `fadeup`; it scrolls and follows the
+  line being prayed, because a long movement is taller than a phone. The pause is `BREATHE` in moss,
+  a moss rule, the movement being entered and "Movement 3 of 5". The blurred sage orb breathes on the
+  nine-second `glow` timing, painted as a radial gradient rather than a blur — see
+  `docs/DECISIONS.md`. Controls are translucent while there is praying left and the oat "Amen" at the
+  end.
+- `SessionSystemBars` keeps the screen on when the reader asked for it and tells the bars they are on
+  a dark ground, putting **both** back in `DisposableEffect.onDispose`. This is the fix task 4 noted
+  for its dark-on-dark status bar.
+- `AbbaNavHost` now shows `SessionRoute`; `SessionPlaceholderScreen` is gone.
+- Six session strings added to `strings.xml`.
+- **Tests**: 107 passing (12 new). `SessionViewModelTest` covers the session opening on the first
+  line, earlier lines of the movement staying behind the current one, a rest at every movement
+  boundary naming what comes next, a movement beginning on an empty ground, ticks counting movements
+  with a pause belonging to the movement it opens onto, the last line being the end with no pause
+  after it and no further to go, going back and never past the beginning, the place surviving a
+  rotation with a pause included, a paced session carrying its dwell and a reader-paced one carrying
+  none, nothing moving on by itself at the end, and the screen kept awake only when asked.
+  `FakeSettingsRepository` is new in `testing/`.
+- Verified: `:app:assembleDebug` and `:app:testDebugUnitTest` pass, and on a Galaxy Note 10+ — the
+  session paints the forest to all four edges with light bar icons, the ticks read
+  spent/current/to-come, a movement builds up and the pause clears it, both survive a rotation into
+  landscape on the same step, the last step shows the oat "Amen", tapping it pops back to Home with
+  the bar icons dark again, and `dumpsys power` shows the `SCREEN_BRIGHT_WAKE_LOCK` taken on entry
+  and released on leaving.
+- Two things the first run on hardware found and fixed: `Modifier.blur` showed the orb's square edge
+  even unbounded, and `Modifier.alpha` over a 3dp tick made it disappear altogether — the tick's
+  strength is in its colour now.
 
 ## Task 9 — done and merged
 
@@ -308,24 +355,17 @@ The UI is still the untouched template "Hello Android" screen. That is expected 
 
 ## Start here for the next task
 
-### Task 10 — `feat/10-prayer-session`
+### Task 11 — `feat/11-saved-screen`
 
 ```
-git switch -c feat/10-prayer-session main
+git switch -c feat/11-saved-screen main
 ```
 
-The session, replacing its placeholder: the full-bleed deep-forest screen, the prayer one line at a
-time at 30/1.42 with earlier lines fading to `oat @ .38`, a breathing pause at **every** movement
-boundary (`breathingPauseLineIndices`) naming the movement being entered, moss progress ticks
-counting **movements** rather than lines — 29 ticks would be noise — the blurred sage orb breathing on the `glow`
-timing, the translucent controls and the oat "Amen". `SessionUiState`, `SessionAction`,
-`SessionViewModel`, `SessionScreen`, `SessionRoute` per the UI pattern in `CLAUDE.md`; the current
-line index lives in `SavedStateHandle`. Pacing comes from `SettingsRepository`
-(`PrayerSettings.SessionPacing`). The screen owns its system bars: keep-screen-on and **light bar
-icons on the dark ground**, both released in `DisposableEffect.onDispose` — this is the fix task 4
-noted for its dark-on-dark status bar.
+The kept lines, replacing the `Saved` placeholder: the 30-radius saved cards at 25/1.45 with their
+tag chips and where each line came from, the way back to the prayer it was kept from, and "Make it my
+prayer". `SavedUiState`, `SavedAction`, `SavedViewModel`, `SavedScreen`, `SavedRoute` per the UI
+pattern in `CLAUDE.md`, over `SavedLineRepository`.
 
-**Done when** `:app:assembleDebug` and `:app:testDebugUnitTest` pass, the session matches
-`docs/DESIGN_SYSTEM.md`, the line index survives a rotation, the screen stays awake while it is open
-and stops when it is left, the status-bar icons are light on the forest and dark again afterwards,
-and "Amen" pops back to the screen the session was opened from.
+**Done when** `:app:assembleDebug` and `:app:testDebugUnitTest` pass, the screen matches
+`docs/DESIGN_SYSTEM.md`, a kept line reads back with its tags and its source, letting one go removes
+it, and the empty state says so rather than showing nothing.

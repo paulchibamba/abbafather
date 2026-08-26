@@ -273,3 +273,32 @@ two identical rows in the Library. The corpus file stays as generated; the corre
 `MigrationTestHelper` reads the exported schemas as assets, and Robolectric reads the assets of the
 variant under test — not the unit-test source set. So `app/schemas` is added to the **debug** source
 set alone: the migration test can find them, and they never travel in a release build.
+
+## 2026-08-27 — The session's position is a step, not a line
+A breathing pause is a place the session can be in, not a property of the line before it. So the
+position `SessionViewModel` keeps in `SavedStateHandle` is an index into a derived list of **steps** —
+every line of the prayer, with a rest between each movement and the next — rather than a line index
+plus a "resting" flag. One key, one source of truth, and a rotation taken at a pause comes back to
+the pause rather than to the line before it. The steps themselves are rebuilt from `movements` on
+demand: they are a pure function of the prayer, so there is nothing to keep in step.
+
+## 2026-08-27 — A movement is what the session screen holds
+The design asks for the prayer one line at a time with earlier lines fading. "Earlier" is bounded to
+the **current movement**: the screen shows the movement from its first line down to the one being
+prayed, and the breathing pause clears the ground so the next movement begins on an empty screen.
+Showing every line prayed so far would turn a twenty-nine-line prayer into a wall of text and undo
+the one-line-at-a-time reading the design is after; showing only the current line would lose the
+sense of a turn of praying being built up. The stage scrolls, because a long movement is taller than
+a phone and a line must never be cut off.
+
+## 2026-08-27 — The pacing timer lives in the composition
+`SessionUiState` carries `autoAdvanceAfterMillis` — the pacing rule, decided in the ViewModel from
+`PrayerSettings.SessionPacing` — and the screen runs the actual `delay` in a `LaunchedEffect`. The
+rule stays testable without a clock, and the timer is tied to the composition, so it stops the moment
+the session leaves the screen rather than running on under `WhileSubscribed`'s five-second tail.
+
+## 2026-08-27 — The session's glow is a gradient, not a blur
+`Modifier.blur` clips to its own graphics layer, so the blurred orb showed a hard square edge on a
+real device even with `BlurredEdgeTreatment.Unbounded`. It is painted as a `Brush.radialGradient`
+fading from sage to transparent instead — no edge to clip, no API-level behaviour to reason about,
+and the breathing alpha animates in the brush.

@@ -28,6 +28,7 @@ import io.abbafather.core.designsystem.theme.AbbaTheme
 import io.abbafather.feature.home.HomeRoute
 import io.abbafather.feature.library.LibraryRoute
 import io.abbafather.feature.reader.ReaderRoute
+import io.abbafather.feature.session.SessionRoute
 
 /**
  * The whole app hangs here: one host, four tabs that keep their own back stacks, and three
@@ -116,12 +117,8 @@ fun NavGraphBuilder.abbaDestinations(navController: NavHostController) {
             },
         )
     }
-    composable<AbbaRoute.Session> { backStackEntry ->
-        val session: AbbaRoute.Session = backStackEntry.toRoute()
-        SessionPlaceholderScreen(
-            prayerId = session.prayerId,
-            onAmen = navController::navigateUp,
-        )
+    composable<AbbaRoute.Session> {
+        SessionRoute(onFinish = navController::navigateUp)
     }
     composable<AbbaRoute.ComposePrayer> { backStackEntry ->
         val compose: AbbaRoute.ComposePrayer = backStackEntry.toRoute()

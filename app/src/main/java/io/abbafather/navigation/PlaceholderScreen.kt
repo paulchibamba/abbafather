@@ -1,8 +1,6 @@
 package io.abbafather.navigation
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,12 +12,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import io.abbafather.core.designsystem.component.AbbaIcons
 import io.abbafather.core.designsystem.component.PillButton
-import io.abbafather.core.designsystem.component.PillButtonDefaults
 import io.abbafather.core.designsystem.component.RoundIconButton
 import io.abbafather.core.designsystem.component.SectionLabel
 import io.abbafather.core.designsystem.component.SoftCard
@@ -80,46 +76,6 @@ fun PlaceholderScreen(
                     color = AbbaTheme.colors.ink,
                 )
             }
-        }
-    }
-}
-
-/** The session is the one destination that takes the whole window, system bars included. */
-@Composable
-fun SessionPlaceholderScreen(
-    prayerId: String,
-    onAmen: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(AbbaTheme.colors.deepForest),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(
-            modifier = Modifier
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-                .padding(AbbaSpacing.SessionPadding),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(AbbaSpacing.BlockGap),
-        ) {
-            Text(
-                text = "Session",
-                style = AbbaTheme.type.sessionLine,
-                color = AbbaTheme.colors.oatOnForest,
-            )
-            Text(
-                text = "prayerId = $prayerId",
-                style = AbbaTheme.type.metaSans,
-                color = AbbaTheme.colors.oatQuiet,
-            )
-            PillButton(
-                text = "Amen",
-                onClick = onAmen,
-                colors = PillButtonDefaults.oatOnForest,
-                textStyle = AbbaTheme.type.amenButtonLabel,
-            )
         }
     }
 }
