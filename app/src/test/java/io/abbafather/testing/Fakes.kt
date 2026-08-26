@@ -6,13 +6,16 @@ import io.abbafather.domain.model.PrayerCollection
 import io.abbafather.domain.model.PrayerMovement
 import io.abbafather.domain.model.PrayerPart
 import io.abbafather.domain.model.PrayerProvenance
+import io.abbafather.domain.model.PrayerSettings
 import io.abbafather.domain.model.PrayerTag
 import io.abbafather.domain.model.PrayerVoice
 import io.abbafather.domain.model.SavedLine
 import io.abbafather.domain.model.ScriptureReference
+import io.abbafather.domain.model.SessionPacing
 import io.abbafather.domain.repository.PersonalPrayerRepository
 import io.abbafather.domain.repository.PrayerRepository
 import io.abbafather.domain.repository.SavedLineRepository
+import io.abbafather.domain.repository.SettingsRepository
 import io.abbafather.domain.util.IdGenerator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -154,6 +157,27 @@ class FakePersonalPrayerRepository(
                 if (it.id == personalPrayerId) it.copy(isDeleted = true, updatedAt = deletedAt) else it
             }
         }
+    }
+}
+
+/** The reader's choices, held in memory. Writes re-emit, as DataStore's do. */
+class FakeSettingsRepository(settings: PrayerSettings = PrayerSettings.Default) :
+    SettingsRepository {
+
+    private val settings = MutableStateFlow(settings)
+
+    override fun observeSettings(): Flow<PrayerSettings> = settings
+
+    override suspend fun setSessionPacing(pacing: SessionPacing) {
+        settings.update { it.copy(sessionPacing = pacing) }
+    }
+
+    override suspend fun setAmbientSoundEnabled(isEnabled: Boolean) {
+        settings.update { it.copy(isAmbientSoundEnabled = isEnabled) }
+    }
+
+    override suspend fun setKeepsScreenOnDuringSession(keepsScreenOn: Boolean) {
+        settings.update { it.copy(keepsScreenOnDuringSession = keepsScreenOn) }
     }
 }
 
