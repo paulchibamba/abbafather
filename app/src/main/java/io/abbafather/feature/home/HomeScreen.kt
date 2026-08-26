@@ -43,8 +43,11 @@ import io.abbafather.core.designsystem.theme.AbbaTheme
 import io.abbafather.domain.model.DailyVerse
 import io.abbafather.domain.model.Greeting
 import io.abbafather.domain.model.Prayer
-import io.abbafather.domain.model.PrayerGroup
-import io.abbafather.domain.model.PrayerKind
+import io.abbafather.domain.model.PrayerMovement
+import io.abbafather.domain.model.PrayerPart
+import io.abbafather.domain.model.PrayerProvenance
+import io.abbafather.domain.model.PrayerTag
+import io.abbafather.domain.model.PrayerVoice
 
 /**
  * The binding wrapper: it holds the ViewModel and turns an action into both the record the ViewModel
@@ -271,10 +274,10 @@ private fun HomeScreenPreview() {
             uiState = HomeUiState(
                 greeting = Greeting.Evening,
                 verse = DailyVerse("Be still, and know that I am God.", "Psalm 46:10"),
-                suggestedPrayer = previewPrayer("A Collect for Peace", "Book of Common Prayer"),
+                suggestedPrayer = previewPrayer("Morning", "Receiving this new day as mercy"),
                 recentlyPrayed = listOf(
-                    previewPrayer("Psalm 23", "Psalms"),
-                    previewPrayer("A Prayer in Distress", "After John Bunyan"),
+                    previewPrayer("Contentment", "Learning to want what you give"),
+                    previewPrayer("The Deeps", "Speaking to you from low ground"),
                 ),
                 isCatalogueReady = true,
             ),
@@ -283,12 +286,27 @@ private fun HomeScreenPreview() {
     }
 }
 
-private fun previewPrayer(title: String, author: String) = Prayer(
+private fun previewPrayer(title: String, heading: String) = Prayer(
     id = title,
     title = title,
-    author = author,
-    kind = PrayerKind.Evening,
-    group = PrayerGroup.BookOfCommonPrayer,
-    themes = emptySet(),
-    lines = listOf("O God, from whom all holy desires, all good counsels, and all just works do proceed."),
+    part = PrayerPart.NeedsAndDevotions,
+    voice = PrayerVoice.Personal,
+    tags = setOf(PrayerTag.Grace),
+    movements = listOf(
+        PrayerMovement(
+            index = 0,
+            heading = heading,
+            lines = listOf("Compassionate Lord, I woke up today because your mercy carried me here."),
+            firstLineIndex = 0,
+        ),
+    ),
+    provenance = PrayerProvenance(
+        originalTitle = title,
+        originalAuthor = "Unattributed Puritan source (compiled and edited by Arthur Bennett)",
+        originalSource = "The Valley of Vision: A Collection of Puritan Prayers and Devotions",
+        originalPublicationDate = "1975",
+        copyrightStatus = "Compilation in copyright; underlying Puritan sources are public domain.",
+        adaptationType = "thematic modern adaptation",
+        adaptationNote = "Contemporary prayer based on the themes of the historical source.",
+    ),
 )

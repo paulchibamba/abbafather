@@ -1,45 +1,50 @@
 package io.abbafather.data.local
 
 import androidx.room.TypeConverter
-import io.abbafather.domain.model.PrayerGroup
-import io.abbafather.domain.model.PrayerKind
-import io.abbafather.domain.model.PrayerTheme
+import io.abbafather.domain.model.PrayerPart
+import io.abbafather.domain.model.PrayerTag
+import io.abbafather.domain.model.PrayerVoice
 
 /**
  * Enums are stored by `name`, never by ordinal, so reordering an enum cannot silently rewrite what
- * rows mean. A theme set that is only ever displayed is stored as one comma-joined column; the
- * catalogue's themes, which are filtered on, live in `prayer_themes` instead.
+ * rows mean. A tag set that is only ever displayed is stored as one comma-joined column; the
+ * catalogue's tags, which are filtered on, live in `prayer_tags` instead.
  */
 class AbbaTypeConverters {
 
     @TypeConverter
-    fun prayerKindToName(kind: PrayerKind): String = kind.name
+    fun prayerPartToName(part: PrayerPart): String = part.name
 
     @TypeConverter
-    fun prayerKindFromName(name: String): PrayerKind = PrayerKind.valueOf(name)
+    fun prayerPartFromName(name: String): PrayerPart = PrayerPart.valueOf(name)
 
     @TypeConverter
-    fun prayerGroupToName(group: PrayerGroup): String = group.name
+    fun prayerVoiceToName(voice: PrayerVoice): String = voice.name
 
     @TypeConverter
-    fun prayerGroupFromName(name: String): PrayerGroup = PrayerGroup.valueOf(name)
+    fun prayerVoiceFromName(name: String): PrayerVoice = PrayerVoice.valueOf(name)
 
     @TypeConverter
-    fun prayerThemeToName(theme: PrayerTheme): String = theme.name
+    fun prayerTagToName(tag: PrayerTag): String = tag.name
 
     @TypeConverter
-    fun prayerThemeFromName(name: String): PrayerTheme = PrayerTheme.valueOf(name)
+    fun prayerTagFromName(name: String): PrayerTag = PrayerTag.valueOf(name)
 
     @TypeConverter
-    fun prayerThemesToNames(themes: Set<PrayerTheme>): String = themes.joinToString(SEPARATOR) { it.name }
+    fun prayerTagsToNames(tags: Set<PrayerTag>): String = tags.joinToString(SEPARATOR) { it.name }
 
+    /**
+     * Lenient on the way in: a name this build does not know is dropped rather than thrown. The
+     * catalogue's vocabulary is closed at build time, but a reader's own kept lines were tagged by
+     * whatever build wrote them, and losing one tag should never cost them the line.
+     */
     @TypeConverter
-    fun prayerThemesFromNames(names: String): Set<PrayerTheme> =
+    fun prayerTagsFromNames(names: String): Set<PrayerTag> =
         if (names.isEmpty()) {
             emptySet()
         } else {
             names.split(SEPARATOR).mapNotNullTo(mutableSetOf()) { name ->
-                PrayerTheme.entries.firstOrNull { it.name == name }
+                PrayerTag.entries.firstOrNull { it.name == name }
             }
         }
 

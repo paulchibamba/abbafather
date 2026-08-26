@@ -17,9 +17,9 @@
     <string name="home_open_prayer">Open</string>
 
     <string name="library_title">Library</string>
-    <string name="library_search_hint">Search prayers, words, authors</string>
+    <string name="library_search_hint">Search prayers, words, themes</string>
     <string name="library_occasions">Occasions</string>
-    <string name="library_collections">Collections</string>
+    <string name="library_parts">In this collection</string>
     <string name="library_themes">Themes</string>
     <string name="library_all_prayers">All prayers</string>
     <string name="library_clear">Clear</string>

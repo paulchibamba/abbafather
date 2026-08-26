@@ -1,7 +1,7 @@
 package io.abbafather.domain.usecase
 
 import io.abbafather.domain.model.Prayer
-import io.abbafather.domain.model.PrayerTheme
+import io.abbafather.domain.model.PrayerTag
 import io.abbafather.domain.model.SavedLine
 import io.abbafather.domain.repository.SavedLineRepository
 import io.abbafather.domain.util.IdGenerator
@@ -20,7 +20,7 @@ class SaveLineUseCase @Inject constructor(
     suspend operator fun invoke(
         prayer: Prayer,
         lineIndex: Int,
-        themes: Set<PrayerTheme> = emptySet(),
+        tags: Set<PrayerTag> = emptySet(),
         note: String? = null,
     ): SavedLine {
         require(lineIndex in prayer.lines.indices) {
@@ -34,7 +34,7 @@ class SaveLineUseCase @Inject constructor(
             sourcePrayerTitle = prayer.title,
             sourceAttribution = prayer.attribution,
             sourceLineIndex = lineIndex,
-            themes = themes.ifEmpty { prayer.themes },
+            tags = tags.ifEmpty { prayer.tags },
             note = note?.takeIf { it.isNotBlank() },
             createdAt = now,
             updatedAt = now,

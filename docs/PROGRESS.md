@@ -22,14 +22,57 @@ you love; write your own prayers. No accounts, no network, no notifications.
 | 5 | Home screen | `feat/05-home-screen` | merged, `task-05` |
 | 6 | Library screen | `feat/06-library-screen` | merged, `task-06` |
 | 7 | Reader + keep-a-line bottom sheet | `feat/07-reader-and-keep-line-sheet` | merged, `task-07` |
-| 8 | Prayer session | `feat/08-prayer-session` | not started |
-| 9 | Saved screen | `feat/09-saved-screen` | not started |
-| 10 | My prayers screen | `feat/10-my-prayers-screen` | not started |
-| 11 | Compose prayer screen | `feat/11-compose-prayer-screen` | not started |
-| 12 | Polish and hardening | `feat/12-polish-and-hardening` | not started |
+| 8 | Catalogue rebuild — the Valley of Vision corpus, schema v2 | `feat/08-catalogue-rebuild` | built, awaiting approval |
+| 9 | Reader metadata — scripture and provenance sheets | `feat/09-reader-metadata` | not started |
+| 10 | Prayer session — movement-aware | `feat/10-prayer-session` | not started |
+| 11 | Saved screen | `feat/11-saved-screen` | not started |
+| 12 | My prayers screen | `feat/12-my-prayers-screen` | not started |
+| 13 | Compose prayer screen | `feat/13-compose-prayer-screen` | not started |
+| 14 | Polish and hardening — incl. About and attribution | `feat/14-polish-and-hardening` | not started |
+
+**The board was renumbered on 2026-08-26**, when `docs/prayers/` arrived with the real catalogue. The
+old tasks 8–12 became 10–14; tasks 8 and 9 are new. See `docs/DECISIONS.md` for why.
 
 Each task is built on its own branch, verified, then **stopped for approval**. Only after approval:
 `git switch main && git merge --no-ff <branch> && git tag task-<nn>`.
+
+## Task 8 — built, awaiting approval
+
+The catalogue becomes real: 186 Valley of Vision adaptations replace the 31 sample prayers, and the
+schema grows to hold what they carry.
+
+- **Content**: `docs/prayers/` (194 files) is the source of truth, committed as generated.
+  `tools/build_catalogue.py` writes `assets/prayer_catalogue.json` — holding back the 8 prayers a
+  reviewer marked "revise", splitting each movement's prose into the lines it is prayed in, dropping
+  our own generation and editorial metadata, and validating tags, parts, voices, headings, passages
+  and uniqueness before it writes. `--check` fails on a stale asset. 186 prayers, 1,039 movements,
+  5,466 lines, 2,606 passages.
+- **Domain**: `Prayer` is now `part` / `voice` / `tags` / `movements` / `provenance`, with `lines`
+  flattened from the movements and `breathingPauseLineIndices` derived from where they end.
+  `PrayerMovement`, `ScriptureReference` and `PrayerProvenance` are new; `PrayerKind` and
+  `PrayerGroup` are gone and `PrayerTheme` is now `PrayerTag` (48 values from the corpus, plus
+  `PrayerPart`'s 11 and `PrayerVoice`'s 2).
+- **Data**: Room **v2** over six catalogue tables (`prayers`, `prayer_movements`, `prayer_lines`,
+  `prayer_movement_themes`, `prayer_scriptures`, `prayer_tags`), `2.json` committed, and a real
+  `MIGRATION_1_2` in `data/local/migration/`. The migration replaces the catalogue and leaves every
+  reader-owned row alone; `CatalogueSeeder` now also runs from `onOpen`, so an empty catalogue fills
+  itself. The seeder parses strictly (`ignoreUnknownKeys = false`).
+- **Screens** adapted rather than redesigned: the Library browses the 11 parts and the 48 tags (the
+  "Occasions" block is gone), the Reader shows each movement's heading with a pause at every
+  movement boundary, and the keep-a-line sheet offers the prayer's own tags. Home is unchanged but
+  for its byline, which now reads "The Valley of Vision, adapted".
+- **Tests**: 87 passing (7 net new). `CatalogueSeederTest` now pins the corpus's invariants — 186
+  prayers, every movement whole and lined up with the flat lines, every passage a reference in a
+  named translation, every prayer saying where it came from, and none of the held-back eight present.
+  `PrayerDaoTest` proves movement and line ordering out of an unordered insert and the cascade to all
+  five child tables. **New** `MigrationTest` over `MigrationTestHelper` proves a v1 database with a
+  kept line and a written prayer survives the migration with the catalogue emptied for reseeding;
+  `app/schemas` is added to the **debug** source set so Robolectric can find it.
+- Verified: `:app:assembleDebug` and `:app:testDebugUnitTest` pass, and on a Pixel 8 emulator holding
+  a **real v1 database** — installing this build over task 7's migrated in place to `user_version` 2
+  with 186 prayers, 1,039 movements and 5,466 lines, and the kept line came through with its text and
+  tags intact. The Library reads "186 prayers", the part tiles total 186, and a prayer opens in the
+  Reader with its movement headings, its sentence lines and a moss pause between movements.
 
 ## Task 7 — done and merged
 
@@ -220,15 +263,40 @@ The UI is still the untouched template "Hello Android" screen. That is expected 
 
 ## Start here for the next task
 
-### Task 8 — `feat/08-prayer-session`
+### Task 9 — `feat/09-reader-metadata`
 
 ```
-git switch -c feat/08-prayer-session main
+git switch -c feat/09-reader-metadata main
+```
+
+The quiet surfaces for what the corpus carries, all on tap, none of it in the way of praying:
+
+- **Scripture sheet** — a small text action at the end of each movement ("Three passages") opens a
+  `ModalBottomSheet` built like the keep-a-line sheet in `feature/reader/ReaderScreen.kt`: the
+  movement's heading, its theological themes, then each reference set as `Isaiah 57:15 · ESV` with
+  its connection paragraph beneath.
+- **Provenance sheet** — an "About this prayer" action beside the byline: the adapted title against
+  the original, Arthur Bennett and Banner of Truth 1975, the copyright line, and the adaptation note
+  verbatim.
+- **Tag picker** — the keep-a-line sheet shows the prayer's own tags ticked plus a "More tags" action
+  revealing the other 48.
+- Movement headings get their final voice; both new sheets keep their state in the `SavedStateHandle`
+  keys `ReaderViewModel` already owns, so they survive a rotation as the keep sheet does.
+
+**Done when** `:app:assembleDebug` and `:app:testDebugUnitTest` pass, both sheets match
+`docs/DESIGN_SYSTEM.md`, each survives a rotation, and nothing new appears on the reading surface
+until it is asked for.
+
+### Task 10 — `feat/10-prayer-session`
+
+```
+git switch -c feat/10-prayer-session main
 ```
 
 The session, replacing its placeholder: the full-bleed deep-forest screen, the prayer one line at a
-time at 30/1.42 with earlier lines fading to `oat @ .38`, the breathing pause after
-`breathingPauseAfterLine`, the moss progress ticks, the blurred sage orb breathing on the `glow`
+time at 30/1.42 with earlier lines fading to `oat @ .38`, a breathing pause at **every** movement
+boundary (`breathingPauseLineIndices`) naming the movement being entered, moss progress ticks
+counting **movements** rather than lines — 29 ticks would be noise — the blurred sage orb breathing on the `glow`
 timing, the translucent controls and the oat "Amen". `SessionUiState`, `SessionAction`,
 `SessionViewModel`, `SessionScreen`, `SessionRoute` per the UI pattern in `CLAUDE.md`; the current
 line index lives in `SavedStateHandle`. Pacing comes from `SettingsRepository`

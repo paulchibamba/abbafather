@@ -4,7 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import io.abbafather.domain.model.PrayerTheme
+import io.abbafather.domain.model.PrayerTag
 
 /**
  * A kept line. Reader-owned, so it carries a UUID id, both timestamps and a soft-delete flag; the
@@ -21,7 +21,7 @@ data class SavedLineEntity(
     @ColumnInfo(name = "source_prayer_title") val sourcePrayerTitle: String?,
     @ColumnInfo(name = "source_attribution") val sourceAttribution: String?,
     @ColumnInfo(name = "source_line_index") val sourceLineIndex: Int?,
-    val themes: Set<PrayerTheme>,
+    val tags: Set<PrayerTag>,
     val note: String?,
     @ColumnInfo(name = "created_at") val createdAt: Long,
     @ColumnInfo(name = "updated_at") val updatedAt: Long,

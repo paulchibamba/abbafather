@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.abbafather.domain.model.Prayer
-import io.abbafather.domain.model.PrayerTheme
+import io.abbafather.domain.model.PrayerTag
 import io.abbafather.domain.model.SavedLine
 import io.abbafather.domain.repository.PrayerRepository
 import io.abbafather.domain.repository.SavedLineRepository
@@ -52,8 +52,8 @@ class ReaderViewModel @Inject constructor(
 
     private val openLineIndex: StateFlow<Int> = savedStateHandle.getStateFlow(OpenLineKey, NoLineOpen)
     private val sheetStage: StateFlow<String> = savedStateHandle.getStateFlow(StageKey, "")
-    private val selectedThemeNames: Flow<List<String>> = savedStateHandle
-        .getStateFlow(SelectedThemesKey, "")
+    private val selectedTagNames: Flow<List<String>> = savedStateHandle
+        .getStateFlow(SelectedTagsKey, "")
         .map { names -> names.split(NameSeparator).filter(String::isNotEmpty) }
 
     private val keptLines: Flow<List<SavedLine>> = savedLineRepository.observeSavedLines()
@@ -67,13 +67,13 @@ class ReaderViewModel @Inject constructor(
         keptLines,
         openLineIndex,
         sheetStage,
-        selectedThemeNames,
-    ) { prayer, keptLines, openLineIndex, stageName, themeNames ->
+        selectedTagNames,
+    ) { prayer, keptLines, openLineIndex, stageName, tagNames ->
         val keptLineIndices = keptLines.mapNotNullTo(mutableSetOf()) { it.sourceLineIndex }
         ReaderUiState(
             prayer = prayer,
             keptLineIndices = keptLineIndices,
-            keepSheet = prayer?.keepSheetOrNull(openLineIndex, stageName, themeNames),
+            keepSheet = prayer?.keepSheetOrNull(openLineIndex, stageName, tagNames),
             isLoaded = prayer != null,
         )
     }.stateIn(
@@ -86,7 +86,7 @@ class ReaderViewModel @Inject constructor(
         when (action) {
             is ReaderAction.SelectLine -> openSheetOn(action.lineIndex)
             ReaderAction.DismissSheet -> closeSheet()
-            is ReaderAction.ToggleTheme -> toggleTheme(action.theme)
+            is ReaderAction.ToggleTag -> toggleTag(action.tag)
             ReaderAction.KeepLine -> keepOpenLine()
             ReaderAction.ReleaseKeptLine -> releaseOpenLine()
             ReaderAction.GrowIntoPrayer -> growOpenLineIntoPrayer()
@@ -109,8 +109,8 @@ class ReaderViewModel @Inject constructor(
         savedStateHandle[StageKey] = stage.name
         // A fresh sheet starts ticked with the prayer's own themes, which is what keeping it plain
         // would have recorded anyway.
-        savedStateHandle[SelectedThemesKey] = uiState.value.prayer
-            ?.themes
+        savedStateHandle[SelectedTagsKey] = uiState.value.prayer
+            ?.tags
             .orEmpty()
             .joinToString(NameSeparator) { it.name }
     }
@@ -118,16 +118,16 @@ class ReaderViewModel @Inject constructor(
     private fun closeSheet() {
         savedStateHandle[OpenLineKey] = NoLineOpen
         savedStateHandle[StageKey] = ""
-        savedStateHandle[SelectedThemesKey] = ""
+        savedStateHandle[SelectedTagsKey] = ""
     }
 
-    private fun toggleTheme(theme: PrayerTheme) {
-        val selected = savedStateHandle.get<String>(SelectedThemesKey)
+    private fun toggleTag(tag: PrayerTag) {
+        val selected = savedStateHandle.get<String>(SelectedTagsKey)
             .orEmpty()
             .split(NameSeparator)
             .filter(String::isNotEmpty)
-        val toggled = if (theme.name in selected) selected - theme.name else selected + theme.name
-        savedStateHandle[SelectedThemesKey] = toggled.joinToString(NameSeparator)
+        val toggled = if (tag.name in selected) selected - tag.name else selected + tag.name
+        savedStateHandle[SelectedTagsKey] = toggled.joinToString(NameSeparator)
     }
 
     private fun keepOpenLine() {
@@ -138,7 +138,7 @@ class ReaderViewModel @Inject constructor(
             saveLine(
                 prayer = prayer,
                 lineIndex = sheet.lineIndex,
-                themes = sheet.themeChips.filter { it.isSelected }.mapTo(mutableSetOf()) { it.theme },
+                tags = sheet.tagChips.filter { it.isSelected }.mapTo(mutableSetOf()) { it.tag },
             )
             savedStateHandle[StageKey] = KeepLineStage.Kept.name
         }
@@ -176,7 +176,7 @@ class ReaderViewModel @Inject constructor(
     private fun Prayer.keepSheetOrNull(
         openLineIndex: Int,
         stageName: String,
-        themeNames: List<String>,
+        tagNames: List<String>,
     ): KeepLineSheetUiState? {
         if (openLineIndex !in lines.indices) return null
         val stage = KeepLineStage.entries.firstOrNull { it.name == stageName } ?: return null
@@ -184,9 +184,8 @@ class ReaderViewModel @Inject constructor(
             stage = stage,
             lineIndex = openLineIndex,
             line = lines[openLineIndex],
-            themeChips = PrayerTheme.entries.map { theme ->
-                KeepThemeChip(theme = theme, isSelected = theme.name in themeNames)
-            },
+            // The prayer's own tags, ticked as they came. Task 9 gives the reader the rest.
+            tagChips = tags.map { tag -> KeepTagChip(tag = tag, isSelected = tag.name in tagNames) },
         )
     }
 
@@ -194,7 +193,7 @@ class ReaderViewModel @Inject constructor(
         const val PrayerIdKey = "prayerId"
         const val OpenLineKey = "readerOpenLineIndex"
         const val StageKey = "readerKeepSheetStage"
-        const val SelectedThemesKey = "readerSelectedThemes"
+        const val SelectedTagsKey = "readerSelectedTags"
         const val NameSeparator = ","
         const val NoLineOpen = -1
     }

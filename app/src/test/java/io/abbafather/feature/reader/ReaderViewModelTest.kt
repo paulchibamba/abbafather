@@ -3,7 +3,7 @@ package io.abbafather.feature.reader
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
-import io.abbafather.domain.model.PrayerTheme
+import io.abbafather.domain.model.PrayerTag
 import io.abbafather.domain.usecase.CreatePersonalPrayerFromLineUseCase
 import io.abbafather.domain.usecase.SaveLineUseCase
 import io.abbafather.testing.CountingIdGenerator
@@ -33,15 +33,17 @@ class ReaderViewModelTest {
     private val clock = Clock.fixed(Instant.parse("2026-08-25T08:30:00Z"), ZoneOffset.UTC)
 
     private val prayer = testPrayer(
-        id = "bcp-peace",
-        title = "A Collect for Peace",
-        author = "Book of Common Prayer, 1662",
-        themes = setOf(PrayerTheme.Peace),
-        lines = listOf(
-            "O God, from whom all holy desires do proceed:",
-            "Give unto thy servants that peace which the world cannot give;",
-            "that our hearts may be set to obey thy commandments.",
+        id = "vov-106-morning",
+        title = "Morning",
+        tags = setOf(PrayerTag.Grace, PrayerTag.MorningAndEvening),
+        movementLines = listOf(
+            listOf(
+                "Compassionate Lord, I woke up today because your mercy carried me here.",
+                "Thank you for the gift of another morning.",
+            ),
+            listOf("Let it matter for my soul."),
         ),
+        headings = listOf("Receiving this new day as mercy", "Asking for the day to matter"),
     )
 
     private val prayerRepository = FakePrayerRepository(listOf(prayer))
@@ -92,7 +94,7 @@ class ReaderViewModelTest {
     }
 
     @Test
-    fun `tapping a line opens the sheet on it, ticked with the prayer's own themes`() = runTest {
+    fun `tapping a line opens the sheet on it, ticked with the prayer's own tags`() = runTest {
         val viewModel = viewModel()
 
         viewModel.loadedStates.test {
@@ -103,8 +105,8 @@ class ReaderViewModelTest {
             assertEquals(KeepLineStage.Keep, sheet?.stage)
             assertEquals(prayer.lines[1], sheet?.line)
             assertEquals(
-                setOf(PrayerTheme.Peace),
-                sheet?.themeChips?.filter { it.isSelected }?.map { it.theme }?.toSet(),
+                prayer.tags,
+                sheet?.tagChips?.filter { it.isSelected }?.map { it.tag }?.toSet(),
             )
             cancelAndIgnoreRemainingEvents()
         }
@@ -118,7 +120,7 @@ class ReaderViewModelTest {
             skipItems(1)
             viewModel.onAction(ReaderAction.SelectLine(1))
             skipItems(1)
-            viewModel.onAction(ReaderAction.ToggleTheme(PrayerTheme.Mercy))
+            viewModel.onAction(ReaderAction.ToggleTag(PrayerTag.MorningAndEvening))
             skipItems(1)
 
             viewModel.onAction(ReaderAction.KeepLine)
@@ -132,7 +134,7 @@ class ReaderViewModelTest {
             assertEquals(prayer.id, savedLine.sourcePrayerId)
             assertEquals(prayer.title, savedLine.sourcePrayerTitle)
             assertEquals(1, savedLine.sourceLineIndex)
-            assertEquals(setOf(PrayerTheme.Peace, PrayerTheme.Mercy), savedLine.themes)
+            assertEquals(setOf(PrayerTag.Grace), savedLine.tags)
             assertEquals(clock.millis(), savedLine.createdAt)
             cancelAndIgnoreRemainingEvents()
         }
@@ -221,7 +223,7 @@ class ReaderViewModelTest {
             skipItems(1)
             before.onAction(ReaderAction.SelectLine(2))
             skipItems(1)
-            before.onAction(ReaderAction.ToggleTheme(PrayerTheme.Peace))
+            before.onAction(ReaderAction.ToggleTag(PrayerTag.Grace))
             awaitItem()
             cancelAndIgnoreRemainingEvents()
         }
@@ -232,8 +234,11 @@ class ReaderViewModelTest {
             assertEquals(KeepLineStage.Keep, sheet?.stage)
             assertEquals(2, sheet?.lineIndex)
             assertEquals(prayer.lines[2], sheet?.line)
-            // Peace was ticked by default and tapped off again; the sheet comes back untouched.
-            assertTrue(sheet?.themeChips?.none { it.isSelected } == true)
+            // Grace was ticked by default and tapped off again; the sheet comes back as it was.
+            assertEquals(
+                setOf(PrayerTag.MorningAndEvening),
+                sheet?.tagChips?.filter { it.isSelected }?.map { it.tag }?.toSet(),
+            )
             cancelAndIgnoreRemainingEvents()
         }
     }

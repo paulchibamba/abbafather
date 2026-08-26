@@ -60,6 +60,20 @@ and collected with `collectAsStateWithLifecycle()`. No mutable state escapes a V
   soft-delete flag so a sync layer can be added later without rewriting the schema.
 - DataStore (Preferences) holds user settings only, never content.
 
+## Content
+
+`docs/prayers/*.json` is the catalogue's source of truth — one file per prayer, committed as
+generated. `python3 tools/build_catalogue.py` turns it into `app/src/main/assets/prayer_catalogue.json`,
+which is **also committed**; `--check` fails if the asset is stale. Never hand-edit the asset.
+
+A prayer is *movements* (heading, lines, theological themes, scripture references), and the generator
+splits each movement's prose into the lines a session is prayed in. A flat line index addresses a
+line everywhere in the app and is what a kept line points at, so those splits are computed once at
+build time and stored — never derived at runtime.
+
+Scripture is carried as a **reference and translation name only**, never the verse text. That is a
+licensing line as well as a design one: do not add verse text to the corpus or the asset.
+
 ## Build notes
 
 - AGP 9 uses built-in Kotlin; the Kotlin Android plugin cannot be applied. `gradle.properties` sets

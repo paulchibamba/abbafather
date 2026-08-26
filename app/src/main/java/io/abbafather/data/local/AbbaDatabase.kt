@@ -12,7 +12,10 @@ import io.abbafather.data.local.entity.PersonalPrayerEntity
 import io.abbafather.data.local.entity.PrayerCollectionEntity
 import io.abbafather.data.local.entity.PrayerEntity
 import io.abbafather.data.local.entity.PrayerLineEntity
-import io.abbafather.data.local.entity.PrayerThemeEntity
+import io.abbafather.data.local.entity.PrayerMovementEntity
+import io.abbafather.data.local.entity.PrayerMovementThemeEntity
+import io.abbafather.data.local.entity.PrayerScriptureEntity
+import io.abbafather.data.local.entity.PrayerTagEntity
 import io.abbafather.data.local.entity.SavedLineEntity
 
 /**
@@ -22,14 +25,17 @@ import io.abbafather.data.local.entity.SavedLineEntity
 @Database(
     entities = [
         PrayerEntity::class,
+        PrayerMovementEntity::class,
         PrayerLineEntity::class,
-        PrayerThemeEntity::class,
+        PrayerMovementThemeEntity::class,
+        PrayerScriptureEntity::class,
+        PrayerTagEntity::class,
         SavedLineEntity::class,
         PersonalPrayerEntity::class,
         PrayerCollectionEntity::class,
         CollectionMemberEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 @TypeConverters(AbbaTypeConverters::class)

@@ -21,8 +21,8 @@ class SearchPrayersUseCase @Inject constructor(
 
     private fun Prayer.matches(query: String): Boolean =
         title.contains(query, ignoreCase = true) ||
-            author?.contains(query, ignoreCase = true) == true ||
-            group.displayName.contains(query, ignoreCase = true) ||
-            themes.any { it.displayName.contains(query, ignoreCase = true) } ||
+            part.displayName.contains(query, ignoreCase = true) ||
+            tags.any { it.displayName.contains(query, ignoreCase = true) } ||
+            movements.any { it.heading.contains(query, ignoreCase = true) } ||
             lines.any { it.contains(query, ignoreCase = true) }
 }

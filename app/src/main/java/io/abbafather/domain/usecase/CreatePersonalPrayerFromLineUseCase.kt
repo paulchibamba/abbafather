@@ -23,7 +23,7 @@ class CreatePersonalPrayerFromLineUseCase @Inject constructor(
             id = idGenerator.newId(),
             title = savedLine.sourcePrayerTitle?.let { "After $it" }.orEmpty(),
             body = savedLine.text + "\n\n",
-            themes = savedLine.themes,
+            tags = savedLine.tags,
             seededFromSavedLineId = savedLine.id,
             createdAt = now,
             updatedAt = now,

@@ -11,7 +11,7 @@ data class SavedLine(
     val sourcePrayerTitle: String?,
     val sourceAttribution: String?,
     val sourceLineIndex: Int?,
-    val themes: Set<PrayerTheme> = emptySet(),
+    val tags: Set<PrayerTag> = emptySet(),
     val note: String? = null,
     val createdAt: Long,
     val updatedAt: Long,

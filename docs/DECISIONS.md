@@ -197,3 +197,79 @@ The Reader pads its sides block by block rather than once on the root column, be
 tinted hit area has to reach 12dp past the text into the margin while the text itself stays on the
 26dp document margin. Compose has no negative padding, so the body column is padded by the difference
 (14dp) and each line adds the remaining 12dp inside its own field.
+
+## 2026-08-26 — The catalogue is the Valley of Vision, and `docs/prayers/` is its source of truth
+The 31 sample prayers seeded in task 3 were scaffolding. The real catalogue is 194 modern adaptations
+of *The Valley of Vision* (ed. Arthur Bennett, Banner of Truth 1975), one JSON file per prayer under
+`docs/prayers/`, committed as generated. `tools/build_catalogue.py` is the only thing that turns them
+into `app/src/main/assets/prayer_catalogue.json`, and that asset is committed too — so the line
+splitting is reviewable in a diff, identical on every machine, and never a surprise at runtime.
+
+The generator validates rather than trusts: an unknown tag, a missing heading, a movement with no
+scripture, a duplicate id or title fails the build. `CatalogueSeeder` now parses with
+`ignoreUnknownKeys = false` for the same reason — the asset and the parser are built from the same
+corpus, so a key one of them does not know means they have drifted apart.
+
+## 2026-08-26 — A prayer is movements; a line is still the address
+The corpus gives paragraphs, not lines: five or six *movements*, each a heading and about seventy
+words. The session needs one thought per screen, so the generator splits each movement at its
+sentence enders and em dashes — 5,466 lines across the catalogue, a median of thirteen words each.
+Those splits are computed once, at build time, and stored as rows.
+
+That matters because a **flat line index is the address the app is built on**: it is what a session
+advances through, what `SaveLineUseCase` records, and what a kept line points back to for as long as
+the reader keeps it. Deriving the split at runtime would have let a change to the splitting rule
+silently move every kept line in the Saved screen. `Prayer.lines` therefore stays flat, and
+`movements` sits beside it carrying the headings, the theological themes and the scripture.
+
+`breathingPauseAfterLine` is gone. A prayer rests at the end of every movement but the last, so
+`breathingPauseLineIndices` is a set and the session gets four to seven pauses instead of one.
+
+## 2026-08-26 — Eight prayers are held back, and the asset is what holds them
+Eleven of the 194 have been through review: three passed, eight were marked "revise". The generator
+excludes the eight, so 186 ship. The other 183 carry no verdict yet and ship as they are — review is
+a content workflow that runs alongside the app rather than a gate the app enforces.
+
+One consequence worth knowing: the eight include "The Valley of Vision" itself, which is the only
+prayer in the *Introductory* part, so that part currently has no tile in the Library. It returns when
+the prayer does.
+
+## 2026-08-26 — Scripture is a reference, never the verse
+Every one of the 2,606 passages is carried as a reference and a translation name ("Isaiah 57:15",
+"ESV") plus our own prose explaining why it stands under that movement. **No verse text is stored or
+shipped.** That keeps the app clear of the ESV's licence terms, and it is also the right shape: the
+Bible is the reader's own, and the app points at it rather than reprinting it. A later session must
+not "helpfully" add verse text to the corpus or the asset.
+
+## 2026-08-26 — Parts and tags replace kind, group and theme
+`PrayerKind` and `PrayerGroup` are deleted and `PrayerTheme` becomes `PrayerTag`, because the closed
+enums the sample catalogue used describe nothing in this corpus. What the corpus does have is 48 tags
+and 11 parts, and the Library browses by exactly those. The tag vocabulary stays a closed enum: the
+generator checks the corpus against it, so a new tag is a decision someone makes rather than a typo
+that ships.
+
+`SavedLine` and `PersonalPrayer` retype to `PrayerTag` and their column is renamed rather than
+rewritten. A tag name from the old vocabulary stays in the column and is dropped on read by the
+lenient converter — a kept line keeps its text, its source and its note whatever happens to its tags.
+
+## 2026-08-26 — The migration replaces the catalogue; the seeder refills it
+`MIGRATION_1_2` drops and recreates the catalogue tables rather than migrating them row by row: every
+id changed, and a catalogue prayer is derived content that the asset can always produce again.
+Nothing the reader owns is touched.
+
+That exposed a gap: `CatalogueSeeder` only ran from `onCreate`, so a migrated database would have
+opened with an empty catalogue forever. The callback now seeds from `onOpen` as well, and the rule is
+"an empty catalogue fills itself" — which is what the twice-guarded design was always reaching for.
+Proved on a real upgrade, not only in a test: a device holding a v1 database with a kept line took
+the new build in place, kept the line whole, and came back with 186 prayers.
+
+## 2026-08-26 — One adapted title corrected in the open
+`vov-170` is the *eve* of the Lord's Day — a week ending — and `vov-176` is Sunday evening itself.
+Adaptation gave both the title "Lord's Day Evening", which is wrong for the first and would have put
+two identical rows in the Library. The corpus file stays as generated; the correction lives in
+`TITLE_OVERRIDES` in the generator, where it can be seen and undone when the corpus is regenerated.
+
+## 2026-08-26 — Schemas are debug assets so a migration can be tested
+`MigrationTestHelper` reads the exported schemas as assets, and Robolectric reads the assets of the
+variant under test — not the unit-test source set. So `app/schemas` is added to the **debug** source
+set alone: the migration test can find them, and they never travel in a release build.

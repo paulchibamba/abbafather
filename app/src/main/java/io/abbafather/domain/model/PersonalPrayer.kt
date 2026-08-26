@@ -8,7 +8,7 @@ data class PersonalPrayer(
     val id: String,
     val title: String,
     val body: String,
-    val themes: Set<PrayerTheme> = emptySet(),
+    val tags: Set<PrayerTag> = emptySet(),
     val seededFromSavedLineId: String? = null,
     val createdAt: Long,
     val updatedAt: Long,
