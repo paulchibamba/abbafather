@@ -28,6 +28,7 @@ import io.abbafather.core.designsystem.theme.AbbaTheme
 import io.abbafather.feature.home.HomeRoute
 import io.abbafather.feature.library.LibraryRoute
 import io.abbafather.feature.reader.ReaderRoute
+import io.abbafather.feature.saved.SavedRoute
 import io.abbafather.feature.session.SessionRoute
 
 /**
@@ -99,13 +100,11 @@ fun NavGraphBuilder.abbaDestinations(navController: NavHostController) {
         )
     }
     composable<AbbaRoute.Saved> {
-        PlaceholderScreen(
-            title = "Saved",
-            actions = listOf(
-                PlaceholderAction("Grow a kept line into a prayer") {
-                    navController.navigate(AbbaRoute.ComposePrayer(seedText = SampleSeedText))
-                },
-            ),
+        SavedRoute(
+            onOpenReader = { prayerId -> navController.navigate(AbbaRoute.Reader(prayerId)) },
+            onOpenComposedPrayer = { personalPrayerId ->
+                navController.navigate(AbbaRoute.ComposePrayer(personalPrayerId = personalPrayerId))
+            },
         )
     }
     composable<AbbaRoute.Reader> {
@@ -148,5 +147,3 @@ fun NavDestination?.toTopLevelDestination(): TopLevelDestination? {
     val destination = this ?: return null
     return TopLevelDestination.entries.firstOrNull { destination.hasRoute(it.route::class) }
 }
-
-private const val SampleSeedText = "Be thou my vision, O Lord of my heart."

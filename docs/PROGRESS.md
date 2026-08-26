@@ -25,7 +25,7 @@ you love; write your own prayers. No accounts, no network, no notifications.
 | 8 | Catalogue rebuild — the Valley of Vision corpus, schema v2 | `feat/08-catalogue-rebuild` | merged, `task-08` |
 | 9 | Reader metadata — scripture and provenance sheets | `feat/09-reader-metadata` | merged, `task-09` |
 | 10 | Prayer session — movement-aware | `feat/10-prayer-session` | merged, `task-10` |
-| 11 | Saved screen | `feat/11-saved-screen` | not started |
+| 11 | Saved screen | `feat/11-saved-screen` | built, awaiting approval |
 | 12 | My prayers screen | `feat/12-my-prayers-screen` | not started |
 | 13 | Compose prayer screen | `feat/13-compose-prayer-screen` | not started |
 | 14 | Polish and hardening — incl. About and attribution | `feat/14-polish-and-hardening` | not started |
@@ -35,6 +35,47 @@ old tasks 8–12 became 10–14; tasks 8 and 9 are new. See `docs/DECISIONS.md` 
 
 Each task is built on its own branch, verified, then **stopped for approval**. Only after approval:
 `git switch main && git merge --no-ff <branch> && git tag task-<nn>`.
+
+## Task 11 — built, awaiting approval
+
+The kept lines, replacing the `Saved` placeholder. The one screen that is entirely the reader's own:
+nothing in it comes from the catalogue except by way of a line someone chose.
+
+- `feature/saved/SavedUiState.kt` — `SavedUiState` (`savedLines`, `isLoaded`, with `isEmpty` true
+  only once the lines have arrived), `SavedLineCardUiState` (the line, its tags, where it came from
+  and when it was kept, with `canOpenSourcePrayer`) and `SavedAction` (`OpenSourcePrayer`,
+  `GrowIntoPrayer`, `ReleaseLine`), plus `SavedEvent.OpenComposedPrayer`.
+- `feature/saved/SavedViewModel.kt` — the first screen with no state of its own: there is nothing to
+  narrow and no sheet to open, so everything drawn comes from `SavedLineRepository` and a line let go
+  of disappears because the repository says so. Growing a line goes through
+  `CreatePersonalPrayerFromLineUseCase` and arrives as an event, as it does in the Reader, because
+  the draft has to exist before there is an id to navigate to. Reaching for the prayer a line came
+  from stamps it through `RecordPrayerOpenedUseCase`, exactly as Home and the Library do.
+- `feature/saved/SavedScreen.kt` — `SavedScreen` (stateless, previewed full and empty) and
+  `SavedRoute`. 38sp title, the kept-line count, then the 30-radius cards: the line at 25/1.45, its
+  tag chips in the vocabulary's order, one meta line saying where it came from and when it was kept,
+  and three text actions — "Read the prayer", "Make it my prayer", and "Let it go" in `ink @ .6`
+  rather than sage, because letting go is not something the card should invite. Nothing is hidden
+  behind a tap: the shelf is short, and a line the reader chose deserves its actions in the open.
+- A line kept from nowhere — no `sourcePrayerId` — still reads whole, without the way back. A saved
+  line carries its own copy of its text and its source, so it never depends on the catalogue.
+- The empty state is a `sageTint` card that says so, rather than a screen with nothing on it. It
+  waits for `isLoaded`, so the reader is never told they have kept nothing while their lines are
+  still coming from Room.
+- `AbbaNavHost` now shows `SavedRoute`; the Saved placeholder and its sample seed text are gone.
+- Ten saved strings and one plural added to `strings.xml`.
+- **Tests**: 116 passing (9 new). `SavedViewModelTest` covers a kept line reading back with its tags,
+  its source and the day it was kept; the newest line at the top; a line kept from nowhere reading
+  without a way back; letting one go removing it and leaving the others alone; an empty shelf saying
+  so; nothing being called empty until the lines have arrived; growing a line writing the draft and
+  asking for the compose screen; growing a line leaving it kept; and reaching for its prayer stamping
+  it as opened.
+- Verified: `:app:assembleDebug` and `:app:testDebugUnitTest` pass, and on a Galaxy Note 10+ — the
+  empty state reads before anything is kept, two lines kept from "Amazing Grace" come back newest
+  first with their chips and "From Amazing Grace · The Valley of Vision, adapted · kept 27 Aug 2026",
+  "Read the prayer" reaches the Reader with both kept lines tinted, "Let it go" removes a card and
+  moves the count to "1 line you wanted to keep.", "Make it my prayer" reaches Compose with a real
+  `personalPrayerId`, and a rotation into landscape keeps the cards whole.
 
 ## Task 10 — done and merged
 
@@ -355,17 +396,19 @@ The UI is still the untouched template "Hello Android" screen. That is expected 
 
 ## Start here for the next task
 
-### Task 11 — `feat/11-saved-screen`
+### Task 12 — `feat/12-my-prayers-screen`
 
 ```
-git switch -c feat/11-saved-screen main
+git switch -c feat/12-my-prayers-screen main
 ```
 
-The kept lines, replacing the `Saved` placeholder: the 30-radius saved cards at 25/1.45 with their
-tag chips and where each line came from, the way back to the prayer it was kept from, and "Make it my
-prayer". `SavedUiState`, `SavedAction`, `SavedViewModel`, `SavedScreen`, `SavedRoute` per the UI
-pattern in `CLAUDE.md`, over `SavedLineRepository`.
+The prayers the reader wrote, replacing the `My prayers` placeholder: the 28-radius cards with the
+title, an excerpt at 17/1.6 and when it was last touched, the round add button that opens Compose
+blank, and the way into a prayer already written. `MyPrayersUiState`, `MyPrayersAction`,
+`MyPrayersViewModel`, `MyPrayersScreen`, `MyPrayersRoute` per the UI pattern in `CLAUDE.md`, over
+`PersonalPrayerRepository`.
 
 **Done when** `:app:assembleDebug` and `:app:testDebugUnitTest` pass, the screen matches
-`docs/DESIGN_SYSTEM.md`, a kept line reads back with its tags and its source, letting one go removes
-it, and the empty state says so rather than showing nothing.
+`docs/DESIGN_SYSTEM.md`, a written prayer reads back with its excerpt and its date, a draft grown
+from a kept line is there waiting, deleting one removes it, and the empty state says so rather than
+showing nothing.
