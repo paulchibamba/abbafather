@@ -23,7 +23,7 @@ you love; write your own prayers. No accounts, no network, no notifications.
 | 6 | Library screen | `feat/06-library-screen` | merged, `task-06` |
 | 7 | Reader + keep-a-line bottom sheet | `feat/07-reader-and-keep-line-sheet` | merged, `task-07` |
 | 8 | Catalogue rebuild — the Valley of Vision corpus, schema v2 | `feat/08-catalogue-rebuild` | merged, `task-08` |
-| 9 | Reader metadata — scripture and provenance sheets | `feat/09-reader-metadata` | built, awaiting approval |
+| 9 | Reader metadata — scripture and provenance sheets | `feat/09-reader-metadata` | merged, `task-09` |
 | 10 | Prayer session — movement-aware | `feat/10-prayer-session` | not started |
 | 11 | Saved screen | `feat/11-saved-screen` | not started |
 | 12 | My prayers screen | `feat/12-my-prayers-screen` | not started |
@@ -36,7 +36,7 @@ old tasks 8–12 became 10–14; tasks 8 and 9 are new. See `docs/DECISIONS.md` 
 Each task is built on its own branch, verified, then **stopped for approval**. Only after approval:
 `git switch main && git merge --no-ff <branch> && git tag task-<nn>`.
 
-## Task 9 — built, awaiting approval
+## Task 9 — done and merged
 
 The quiet surfaces for what the corpus carries. Nothing new appears on the reading surface until it
 is asked for: two small text actions, and everything else stays in a sheet.
