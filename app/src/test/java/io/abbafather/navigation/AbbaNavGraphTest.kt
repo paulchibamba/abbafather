@@ -69,6 +69,20 @@ class AbbaNavGraphTest {
     }
 
     @Test
+    fun `about is reachable from home and hides the bottom bar`() {
+        navController.navigate(AbbaRoute.About)
+
+        assertNull(navController.currentDestination.toTopLevelDestination())
+        assertEquals(
+            AbbaRoute.About,
+            navController.currentBackStackEntry?.toRoute<AbbaRoute.About>(),
+        )
+
+        navController.navigateUp()
+        assertEquals(TopLevelDestination.HOME, navController.currentDestination.toTopLevelDestination())
+    }
+
+    @Test
     fun `compose opens blank, on an existing prayer, or seeded from a kept line`() {
         val openings = listOf(
             AbbaRoute.ComposePrayer(),

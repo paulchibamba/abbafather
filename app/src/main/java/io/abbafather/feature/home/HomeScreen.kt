@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -28,7 +29,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.abbafather.R
 import io.abbafather.core.designsystem.component.AbbaIcons
@@ -57,6 +58,7 @@ import io.abbafather.domain.model.PrayerVoice
 fun HomeRoute(
     onOpenReader: (String) -> Unit,
     onBeginSession: (String) -> Unit,
+    onOpenAbout: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -69,6 +71,7 @@ fun HomeRoute(
             when (action) {
                 is HomeAction.ReadPrayer -> onOpenReader(action.prayerId)
                 is HomeAction.BeginSession -> onBeginSession(action.prayerId)
+                HomeAction.OpenAbout -> onOpenAbout()
             }
         },
         modifier = modifier,
@@ -91,7 +94,11 @@ fun HomeScreen(
             )
             .verticalScroll(rememberScrollState()),
     ) {
-        HomeHeader(greeting = uiState.greeting, verse = uiState.verse)
+        HomeHeader(
+            greeting = uiState.greeting,
+            verse = uiState.verse,
+            onOpenAbout = { onAction(HomeAction.OpenAbout) },
+        )
 
         Column(
             modifier = Modifier.padding(HomeBodyPadding),
@@ -116,6 +123,7 @@ fun HomeScreen(
 private fun HomeHeader(
     greeting: Greeting,
     verse: DailyVerse?,
+    onOpenAbout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -126,8 +134,22 @@ private fun HomeHeader(
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
             .padding(AbbaSpacing.HomeHeaderPadding),
     ) {
-        BrandEyebrow(color = AbbaTheme.colors.mutedSage)
-        Spacer(Modifier.height(18.dp))
+        // The app's name and the one way out of the four tabs, on the same tracked-out line.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            BrandEyebrow(color = AbbaTheme.colors.mutedSage, modifier = Modifier.weight(1f))
+            TextActionButton(
+                text = stringResource(R.string.home_about).uppercase(),
+                onClick = onOpenAbout,
+                contentColor = AbbaTheme.colors.mutedSage,
+                pressedContentColor = AbbaTheme.colors.inkOnTint,
+                textStyle = AbbaTheme.type.brandEyebrow,
+                modifier = Modifier.heightIn(min = 44.dp),
+            )
+        }
+        Spacer(Modifier.height(4.dp))
         Text(
             text = stringResource(greeting.labelResource),
             style = AbbaTheme.type.homeGreeting,
@@ -229,6 +251,7 @@ private fun RecentPrayerRow(
         shape = AbbaShapes.ListRow,
         contentPadding = PaddingValues(horizontal = 22.dp, vertical = 18.dp),
         onClick = onClick,
+        onClickLabel = stringResource(R.string.home_open_prayer),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
@@ -246,7 +269,8 @@ private fun RecentPrayerRow(
             }
             Icon(
                 imageVector = AbbaIcons.ArrowRight,
-                contentDescription = stringResource(R.string.home_open_prayer),
+                // The row itself says what the tap does; the arrow only points.
+                contentDescription = null,
                 tint = AbbaTheme.colors.mutedSage,
                 modifier = Modifier.size(20.dp),
             )

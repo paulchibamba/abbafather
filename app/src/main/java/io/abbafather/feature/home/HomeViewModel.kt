@@ -56,6 +56,8 @@ class HomeViewModel @Inject constructor(
         val prayerId = when (action) {
             is HomeAction.ReadPrayer -> action.prayerId
             is HomeAction.BeginSession -> action.prayerId
+            // Opening the About screen is the navigator's alone: nothing was prayed.
+            HomeAction.OpenAbout -> return
         }
         viewModelScope.launch { recordPrayerOpened(prayerId) }
     }

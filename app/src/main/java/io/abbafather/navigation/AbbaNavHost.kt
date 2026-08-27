@@ -24,6 +24,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import io.abbafather.core.designsystem.theme.AbbaTheme
+import io.abbafather.feature.about.AboutRoute
 import io.abbafather.feature.composeprayer.ComposePrayerRoute
 import io.abbafather.feature.home.HomeRoute
 import io.abbafather.feature.library.LibraryRoute
@@ -83,6 +84,7 @@ fun NavGraphBuilder.abbaDestinations(navController: NavHostController) {
         HomeRoute(
             onOpenReader = { prayerId -> navController.navigate(AbbaRoute.Reader(prayerId)) },
             onBeginSession = { prayerId -> navController.navigate(AbbaRoute.Session(prayerId)) },
+            onOpenAbout = { navController.navigate(AbbaRoute.About) },
         )
     }
     composable<AbbaRoute.Library> {
@@ -117,6 +119,9 @@ fun NavGraphBuilder.abbaDestinations(navController: NavHostController) {
     }
     composable<AbbaRoute.Session> {
         SessionRoute(onFinish = navController::navigateUp)
+    }
+    composable<AbbaRoute.About> {
+        AboutRoute(onBack = navController::navigateUp)
     }
     composable<AbbaRoute.ComposePrayer> {
         ComposePrayerRoute(onBack = navController::navigateUp)

@@ -45,6 +45,7 @@ scope is genuinely needed.
 | `DatabaseModule` | `AbbaDatabase`, its DAOs, the settings `DataStore` |
 | `RepositoryModule` | `@Binds` domain interface → data implementation |
 | `TimeModule` | `java.time.Clock`, `IdGenerator` |
+| `AppInfoModule` | `AppInfo` — the installed package's version name |
 
 ViewModels are `@HiltViewModel` and obtained with `hiltViewModel()` at the navigation route.
 
@@ -69,6 +70,7 @@ Type-safe `@Serializable` routes in `navigation/`:
 | `Reader` | `prayerId` | no |
 | `Session` | `prayerId` | no |
 | `ComposePrayer` | `personalPrayerId?`, `seedText?` | no |
+| `About` | — | no |
 
 Top-level tabs save and restore their back stacks (`popUpTo(startDestination) { saveState = true }`,
 `restoreState = true`, `launchSingleTop = true`).
@@ -76,7 +78,9 @@ Top-level tabs save and restore their back stacks (`popUpTo(startDestination) { 
 ## Persistence
 
 Room v1, schema exported to `app/schemas/` and committed. Catalogue prayers are seeded once from
-`assets/prayer_catalogue.json` in a `RoomDatabase.Callback` and are read-only to the user. User-owned
+`assets/prayer_catalogue.json` by `CatalogueSeedingCallback`, from both `onCreate` and `onOpen`, and are
+read-only to the user. User-owned
 rows (saved lines, personal prayers, collections) carry a UUID id, `createdAt`/`updatedAt` epoch millis
 and an `isDeleted` soft-delete flag. DataStore Preferences holds settings only (pacing, ambient
-default). No network layer exists and none is planned.
+default). The OFL notices are read from `assets/licenses/` by `AssetLicenceRepository`, which is the
+only other thing the app reads off disk. No network layer exists and none is planned.

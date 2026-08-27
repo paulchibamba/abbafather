@@ -20,6 +20,10 @@ sealed interface AbbaRoute {
     @Serializable
     data object Saved : AbbaRoute
 
+    /** The settings and the notices — the one screen that is about the app rather than a prayer. */
+    @Serializable
+    data object About : AbbaRoute
+
     /** Reading a catalogue prayer whole, before or instead of praying it line by line. */
     @Serializable
     data class Reader(val prayerId: String) : AbbaRoute

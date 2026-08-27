@@ -4,10 +4,12 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import io.abbafather.data.repository.AssetLicenceRepository
 import io.abbafather.data.repository.DataStoreSettingsRepository
 import io.abbafather.data.repository.OfflinePersonalPrayerRepository
 import io.abbafather.data.repository.OfflinePrayerRepository
 import io.abbafather.data.repository.OfflineSavedLineRepository
+import io.abbafather.domain.repository.LicenceRepository
 import io.abbafather.domain.repository.PersonalPrayerRepository
 import io.abbafather.domain.repository.PrayerRepository
 import io.abbafather.domain.repository.SavedLineRepository
@@ -36,4 +38,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSettingsRepository(repository: DataStoreSettingsRepository): SettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindLicenceRepository(repository: AssetLicenceRepository): LicenceRepository
 }

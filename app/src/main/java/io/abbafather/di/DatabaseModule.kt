@@ -6,8 +6,6 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
-import androidx.room.RoomDatabase
-import androidx.sqlite.SQLiteConnection
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,10 +20,10 @@ import io.abbafather.data.local.dao.PrayerDao
 import io.abbafather.data.local.dao.SavedLineDao
 import io.abbafather.data.local.migration.AbbaMigrations
 import io.abbafather.data.local.seed.CatalogueSeeder
+import io.abbafather.data.local.seed.CatalogueSeedingCallback
 import io.abbafather.data.preferences.SettingsDataStore
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import javax.inject.Provider
 import javax.inject.Singleton
 
@@ -35,11 +33,7 @@ object DatabaseModule {
 
     /**
      * The seeder needs DAOs from the database it is being handed to, so it arrives as a [Provider]
-     * and is only resolved inside the callback — by which point the database exists.
-     *
-     * The catalogue fills itself whenever it is empty, which is true on a fresh install and again
-     * after a migration that replaced it — so the seed runs from `onOpen` as well as `onCreate`, and
-     * [CatalogueSeeder] decides whether there is anything to do.
+     * and is only resolved inside [CatalogueSeedingCallback] — by which point the database exists.
      *
      * There is deliberately no `fallbackToDestructiveMigration`: this database holds prayers people
      * wrote, and a missing migration must fail loudly rather than quietly empty their Saved screen.
@@ -52,17 +46,10 @@ object DatabaseModule {
         seeder: Provider<CatalogueSeeder>,
     ): AbbaDatabase = Room.databaseBuilder(context, AbbaDatabase::class.java, AbbaDatabase.NAME)
         .addCallback(
-            object : RoomDatabase.Callback() {
-                override fun onCreate(connection: SQLiteConnection) {
-                    super.onCreate(connection)
-                    applicationScope.launch { seeder.get().seedCatalogueIfEmpty() }
-                }
-
-                override fun onOpen(connection: SQLiteConnection) {
-                    super.onOpen(connection)
-                    applicationScope.launch { seeder.get().seedCatalogueIfEmpty() }
-                }
-            },
+            CatalogueSeedingCallback(
+                applicationScope = applicationScope,
+                seedCatalogueIfEmpty = { seeder.get().seedCatalogueIfEmpty() },
+            ),
         )
         .addMigrations(*AbbaMigrations)
         .build()

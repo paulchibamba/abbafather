@@ -25,6 +25,7 @@ fun SoftCard(
     pressedContainerColor: Color = AbbaTheme.colors.cardPressed,
     contentPadding: PaddingValues = PaddingValues(horizontal = 22.dp, vertical = 20.dp),
     onClick: (() -> Unit)? = null,
+    onClickLabel: String? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
@@ -35,6 +36,7 @@ fun SoftCard(
                 containerColor = containerColor,
                 pressedContainerColor = pressedContainerColor,
                 onClick = onClick,
+                onClickLabel = onClickLabel,
             )
             .padding(contentPadding),
         content = content,

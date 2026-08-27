@@ -24,6 +24,7 @@ fun Modifier.pressableSurface(
     containerColor: Color,
     pressedContainerColor: Color = containerColor,
     onClick: (() -> Unit)? = null,
+    onClickLabel: String? = null,
     role: Role? = Role.Button,
     enabled: Boolean = true,
 ): Modifier = composed {
@@ -44,6 +45,9 @@ fun Modifier.pressableSurface(
                     interactionSource = interactionSource,
                     indication = null,
                     enabled = enabled,
+                    // What the tap does, for a reader who is being read the card rather than
+                    // seeing it: "double tap to open", not "double tap to activate".
+                    onClickLabel = onClickLabel,
                     role = role,
                     onClick = onClick,
                 )
