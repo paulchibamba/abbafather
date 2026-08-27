@@ -104,6 +104,14 @@
         <item quantity="other">%1$d prayers in your own words.</item>
     </plurals>
 
+    <string name="compose_back">Back</string>
+    <string name="compose_title_placeholder">Name this prayer</string>
+    <string name="compose_body_placeholder">Say it as you would say it.</string>
+    <string name="compose_tag_it">Tag it</string>
+    <string name="compose_more_tags">More tags</string>
+    <string name="compose_keep_prayer">Keep prayer</string>
+    <string name="compose_kept_hint">It goes to My prayers, and stays on this phone.</string>
+
     <string name="session_leave">Leave this prayer</string>
     <string name="session_previous">Back a line</string>
     <string name="session_continue">Continue</string>

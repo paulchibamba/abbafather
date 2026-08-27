@@ -23,8 +23,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import io.abbafather.core.designsystem.theme.AbbaTheme
+import io.abbafather.feature.composeprayer.ComposePrayerRoute
 import io.abbafather.feature.home.HomeRoute
 import io.abbafather.feature.library.LibraryRoute
 import io.abbafather.feature.myprayers.MyPrayersRoute
@@ -118,14 +118,8 @@ fun NavGraphBuilder.abbaDestinations(navController: NavHostController) {
     composable<AbbaRoute.Session> {
         SessionRoute(onFinish = navController::navigateUp)
     }
-    composable<AbbaRoute.ComposePrayer> { backStackEntry ->
-        val compose: AbbaRoute.ComposePrayer = backStackEntry.toRoute()
-        PlaceholderScreen(
-            title = "Compose",
-            subtitle = "personalPrayerId = ${compose.personalPrayerId ?: "—"}\n" +
-                "seedText = ${compose.seedText ?: "—"}",
-            onBack = navController::navigateUp,
-        )
+    composable<AbbaRoute.ComposePrayer> {
+        ComposePrayerRoute(onBack = navController::navigateUp)
     }
 }
 
