@@ -1,0 +1,54 @@
+This repository holds two different kinds of work, and they are not licensed the same way.
+
+WHAT THIS LICENCE COVERS
+    The application source code: everything under app/src/, tools/, the Gradle build
+    files, and the documentation under docs/ that describes them.
+
+WHAT IT DOES NOT COVER
+    The prayer corpus — docs/prayers/*.json and the generated
+    app/src/main/assets/prayer_catalogue.json — which is adapted from a work still in
+    copyright and carries no licence grant. See "The corpus" below.
+
+    The bundled typefaces in app/src/main/res/font/, which are used under the SIL Open
+    Font License 1.1. Both notices travel with the app in
+    app/src/main/assets/licenses/ and are readable from its About screen.
+
+
+MIT License
+
+Copyright (c) 2026 Paul Chibamba
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALING IN THE
+SOFTWARE.
+
+
+THE CORPUS
+
+The 186 prayers in this repository are modern adaptations of prayers from "The Valley of
+Vision: A Collection of Puritan Prayers and Devotions", edited by Arthur Bennett and
+published by The Banner of Truth Trust in 1975.
+
+The underlying Puritan sources are public domain. The compilation itself — its selection,
+its titles and its arrangement — is in copyright to Banner of Truth, and this repository
+follows that selection and those titles. No adaptation reproduces the original wording;
+each was rewritten from the theological themes of its source, and each carries a
+provenance record naming what it was adapted from and what the adaptation did.
+
+No licence is granted over the adaptations or over the corpus files. All rights are
+reserved in them, and nothing here should be read as a grant of rights in the underlying
+compilation, which is not the copyright holder's to give.

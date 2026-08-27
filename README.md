@@ -91,8 +91,12 @@ so it cannot be allowed to drift.
 
 ## Licensing
 
-The bundled typefaces are used under the SIL Open Font License; both notices travel in the app
-(`app/src/main/assets/licenses/`) and are readable from the About screen.
+The repository holds two kinds of work and licenses them differently — see [`LICENSE`](LICENSE).
 
-The application code and the adapted corpus carry no licence grant yet — see the copyright note
-above before reusing either.
+- **The application code** — `app/src/`, `tools/`, the build files and the docs describing them — is
+  MIT licensed.
+- **The prayer corpus** — `docs/prayers/` and the generated asset — carries **no licence grant**. It
+  is adapted from a compilation still in copyright to Banner of Truth, and following that selection
+  and those titles is not something this repository can hand on.
+- **The bundled typefaces** are used under the SIL Open Font License 1.1; both notices travel in the
+  app and are readable from the About screen.
