@@ -27,6 +27,7 @@ import androidx.navigation.toRoute
 import io.abbafather.core.designsystem.theme.AbbaTheme
 import io.abbafather.feature.home.HomeRoute
 import io.abbafather.feature.library.LibraryRoute
+import io.abbafather.feature.myprayers.MyPrayersRoute
 import io.abbafather.feature.reader.ReaderRoute
 import io.abbafather.feature.saved.SavedRoute
 import io.abbafather.feature.session.SessionRoute
@@ -90,13 +91,11 @@ fun NavGraphBuilder.abbaDestinations(navController: NavHostController) {
         )
     }
     composable<AbbaRoute.MyPrayers> {
-        PlaceholderScreen(
-            title = "My prayers",
-            actions = listOf(
-                PlaceholderAction("Write a prayer") {
-                    navController.navigate(AbbaRoute.ComposePrayer())
-                },
-            ),
+        MyPrayersRoute(
+            onOpenPrayer = { personalPrayerId ->
+                navController.navigate(AbbaRoute.ComposePrayer(personalPrayerId = personalPrayerId))
+            },
+            onWriteNewPrayer = { navController.navigate(AbbaRoute.ComposePrayer()) },
         )
     }
     composable<AbbaRoute.Saved> {

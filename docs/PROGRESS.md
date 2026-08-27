@@ -26,7 +26,7 @@ you love; write your own prayers. No accounts, no network, no notifications.
 | 9 | Reader metadata — scripture and provenance sheets | `feat/09-reader-metadata` | merged, `task-09` |
 | 10 | Prayer session — movement-aware | `feat/10-prayer-session` | merged, `task-10` |
 | 11 | Saved screen | `feat/11-saved-screen` | merged, `task-11` |
-| 12 | My prayers screen | `feat/12-my-prayers-screen` | not started |
+| 12 | My prayers screen | `feat/12-my-prayers-screen` | built, awaiting approval |
 | 13 | Compose prayer screen | `feat/13-compose-prayer-screen` | not started |
 | 14 | Polish and hardening — incl. About and attribution | `feat/14-polish-and-hardening` | not started |
 
@@ -35,6 +35,47 @@ old tasks 8–12 became 10–14; tasks 8 and 9 are new. See `docs/DECISIONS.md` 
 
 Each task is built on its own branch, verified, then **stopped for approval**. Only after approval:
 `git switch main && git merge --no-ff <branch> && git tag task-<nn>`.
+
+## Task 12 — built, awaiting approval
+
+The prayers the reader wrote, replacing the `My prayers` placeholder. The shelf that is theirs
+alone: nothing on it came from the catalogue except by way of a line they kept.
+
+- `feature/myprayers/MyPrayersUiState.kt` — `MyPrayersUiState` (`prayers`, `isLoaded`, with
+  `isEmpty` true only once the prayers have arrived), `MyPrayerCardUiState` (title, excerpt,
+  `lastTouchedAt`, `isAwaitingDeleteConfirmation`, and `hasTitle` for the draft not yet named) and
+  `MyPrayersAction` (`OpenPrayer`, `WriteNewPrayer`, `AskToDelete`, `ConfirmDelete`, `CancelDelete`).
+- `feature/myprayers/MyPrayersViewModel.kt` — the only state it owns is which card, if any, is
+  asking whether the reader means it, and that lives in `SavedStateHandle` so a rotation taken
+  mid-question comes back to the question. Everything else is `PersonalPrayerRepository`, which
+  already orders by `updatedAt`, so the prayer touched last is the one at the top. Opening a written
+  prayer records nothing: its date is the date the reader last changed it, not the date they looked.
+- `feature/myprayers/MyPrayersScreen.kt` — `MyPrayersScreen` (stateless, previewed full and empty)
+  and `MyPrayersRoute`. The 38sp title and the count on the left with the sage 52dp add button on
+  the right, then the 28-radius cards: the title at 23/1.2 — or a placeholder-grey "Untitled" for a
+  draft still without a name — the opening line at 17/1.6 clipped at two lines, "Last touched
+  25 Aug 2026", and one quiet text action.
+- **Deleting takes two taps.** "Delete" only asks; the card itself turns into "Delete this prayer?"
+  with "Keep it" in sage and "Yes, delete" quiet beside it. This app holds prayers people wrote, so
+  nothing they wrote goes on one tap — and the question is asked on the card rather than in a dialog,
+  because the design has none.
+- `AbbaNavHost` now shows `MyPrayersRoute`; the card opens Compose on its `personalPrayerId` and the
+  add button opens it blank. `PlaceholderScreen` survives one more task, for Compose alone.
+- Ten My-prayers strings and one plural added to `strings.xml`.
+- **Tests**: 125 passing (9 new). `MyPrayersViewModelTest` covers a written prayer reading back with
+  its excerpt and the day it was last touched, the most recently touched at the top, a prayer not yet
+  named still reading, a draft grown from a kept line waiting here, the first tap only asking and
+  only on its own card, "Keep it" putting the question away and leaving the prayer, confirming
+  removing it and leaving the others alone, the question surviving a rotation, and an empty shelf
+  saying so but not before the prayers have arrived.
+- Verified: `:app:assembleDebug` and `:app:testDebugUnitTest` pass, and on **both** a Pixel 8
+  emulator (API 33) and a Galaxy Note 10+, each holding a real database. On the emulator the draft
+  grown from a kept line in task 7 was waiting as "After Grant, Almighty God" with its opening line
+  and "Last touched Aug 25, 2026", and "Yes, delete" removed it and left the empty state saying so.
+  On the phone the draft grown in task 11 was waiting as "After Amazing Grace" with "Father, you are
+  endlessly generous." and "Last touched 27 Aug 2026"; the card reaches Compose with its
+  `personalPrayerId` and the plus reaches it blank; "Delete" only asks, the question survives a
+  rotation into landscape and back, and "Keep it" puts it away with the prayer intact.
 
 ## Task 11 — done and merged
 
@@ -396,19 +437,19 @@ The UI is still the untouched template "Hello Android" screen. That is expected 
 
 ## Start here for the next task
 
-### Task 12 — `feat/12-my-prayers-screen`
+### Task 13 — `feat/13-compose-prayer-screen`
 
 ```
-git switch -c feat/12-my-prayers-screen main
+git switch -c feat/13-compose-prayer-screen main
 ```
 
-The prayers the reader wrote, replacing the `My prayers` placeholder: the 28-radius cards with the
-title, an excerpt at 17/1.6 and when it was last touched, the round add button that opens Compose
-blank, and the way into a prayer already written. `MyPrayersUiState`, `MyPrayersAction`,
-`MyPrayersViewModel`, `MyPrayersScreen`, `MyPrayersRoute` per the UI pattern in `CLAUDE.md`, over
-`PersonalPrayerRepository`.
+Writing a prayer, replacing the last placeholder: the borderless 32/1.2 title field and the 21/1.6
+body field on the oat ground, the tags it can be given, the 46h keep button, and the three ways in —
+blank from My prayers, on an existing `personalPrayerId`, and on the `seedText` of a kept line.
+`ComposePrayerUiState`, `ComposePrayerAction`, `ComposePrayerViewModel`, `ComposePrayerScreen`,
+`ComposePrayerRoute` per the UI pattern in `CLAUDE.md`, over `PersonalPrayerRepository`.
 
 **Done when** `:app:assembleDebug` and `:app:testDebugUnitTest` pass, the screen matches
-`docs/DESIGN_SYSTEM.md`, a written prayer reads back with its excerpt and its date, a draft grown
-from a kept line is there waiting, deleting one removes it, and the empty state says so rather than
-showing nothing.
+`docs/DESIGN_SYSTEM.md`, a draft survives a rotation and a trip through process death, an existing
+prayer opens on what was written and saves back to the same row, and `navigation/PlaceholderScreen.kt`
+is gone.
