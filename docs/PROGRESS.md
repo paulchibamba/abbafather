@@ -27,7 +27,7 @@ you love; write your own prayers. No accounts, no network, no notifications.
 | 10 | Prayer session — movement-aware | `feat/10-prayer-session` | merged, `task-10` |
 | 11 | Saved screen | `feat/11-saved-screen` | merged, `task-11` |
 | 12 | My prayers screen | `feat/12-my-prayers-screen` | merged, `task-12` |
-| 13 | Compose prayer screen | `feat/13-compose-prayer-screen` | not started |
+| 13 | Compose prayer screen | `feat/13-compose-prayer-screen` | built, awaiting approval |
 | 14 | Polish and hardening — incl. About and attribution | `feat/14-polish-and-hardening` | not started |
 
 **The board was renumbered on 2026-08-26**, when `docs/prayers/` arrived with the real catalogue. The
@@ -35,6 +35,56 @@ old tasks 8–12 became 10–14; tasks 8 and 9 are new. See `docs/DECISIONS.md` 
 
 Each task is built on its own branch, verified, then **stopped for approval**. Only after approval:
 `git switch main && git merge --no-ff <branch> && git tag task-<nn>`.
+
+## Task 13 — built, awaiting approval
+
+Writing a prayer, replacing the last placeholder. The page is the reader's own words on the oat
+ground: no boxes, no labels, nothing between them and what they are saying.
+
+- `feature/composeprayer/ComposePrayerUiState.kt` — `ComposePrayerUiState` (`tagChips`,
+  `canShowMoreTags`, `canKeep`, `isLoaded`), the separate `ComposePrayerDraft` (title and body),
+  `ComposePrayerAction` (`TitleChanged`, `BodyChanged`, `ToggleTag`, `ShowMoreTags`, `KeepPrayer`,
+  `Back`) and `ComposePrayerEvent.Kept`.
+- **The words are not screen state.** The draft lives in `SavedStateHandle`, because this is the one
+  screen whose loss would cost the reader their own words — but it reaches the page once as
+  `openingDraft`, and the state carries only the tags and a `canKeep` boolean. A `StateFlow` does not
+  re-emit an equal value, so a body that grows by a letter redraws nothing. See `docs/DECISIONS.md`.
+- `feature/composeprayer/ComposePrayerViewModel.kt` — opened three ways: blank, on an existing
+  `personalPrayerId`, or on the `seedText` of a kept line. The stored row is read exactly once,
+  guarded by a `composeDraftLoaded` key, so a draft restored after process death is never overwritten
+  by what Room still holds; a blank page and a seeded one need nothing from Room and open at once.
+  Keeping writes an existing prayer back to its own row, keeping the day it was created, and mints a
+  new one otherwise — reading the draft from the handle rather than from `uiState`, which only holds
+  a value while the screen is collecting it.
+- `feature/composeprayer/ComposePrayerScreen.kt` — `ComposePrayerScreen` (stateless, previewed
+  written and blank) and `ComposePrayerRoute`. The 44h round back button, the borderless 32/1.2 title
+  field over the 21/1.6 body field, "TAG IT", the 46h keep button — sage once there is something to
+  keep, quiet card before that — and a line saying where it goes. `imePadding` keeps the button above
+  the keyboard.
+- The picker shows only the ticked tags until "More tags" widens it to all 48 **in the vocabulary's
+  own order**: ticking one must not move the next one out from under the finger. See
+  `docs/DECISIONS.md`.
+- `AbbaNavHost` now shows `ComposePrayerRoute`, and **`navigation/PlaceholderScreen.kt` is gone** —
+  every destination in the app is now a real screen.
+- Seven compose strings added to `strings.xml`.
+- **Tests**: 134 passing (9 new). `ComposePrayerViewModelTest` covers a blank page opening on nothing
+  with nothing to keep, a kept line opening on the line with room after it, a prayer already written
+  opening on what was written, keeping a new prayer writing it whole with the name tidied and the
+  body left exactly as typed, keeping an existing one saving back to the same row with its created
+  date intact, a name on its own not being a prayer, the draft surviving a rotation and never being
+  overwritten by the stored row, the picker widening to the whole vocabulary in its own order, and an
+  unkept draft leaving nothing behind.
+- Verified: `:app:assembleDebug` and `:app:testDebugUnitTest` pass, and on a Pixel 8 emulator (API
+  33) — the blank page opens on its two placeholders with the keep button quiet, both fields take
+  text, the keep button turns sage on the first word, the draft survives a rotation into landscape
+  and back, and it survives a real process death (`am kill`, resumed from recents) with both fields
+  whole. Then on a Galaxy Note 10+ holding a real database — the prayer grown from a kept line in
+  task 11 opens on its own title, body and both its tags ticked; leaving it without keeping writes
+  nothing, and the card on My prayers is untouched; the plus opens a blank page that takes a title
+  and a body; and in the widened picker two chips ticked exactly where they were aimed, which is the
+  reordering bug the emulator found. **Still unchecked on hardware**: the "Keep prayer" tap itself
+  and the row it writes — the phone dropped off wireless adb one tap short, twice. (Its `/data` was
+  also full; `pm trim-caches` freed 3.2 GB, which is what let the build install at all.)
 
 ## Task 12 — done and merged
 
@@ -437,19 +487,17 @@ The UI is still the untouched template "Hello Android" screen. That is expected 
 
 ## Start here for the next task
 
-### Task 13 — `feat/13-compose-prayer-screen`
+### Task 14 — `feat/14-polish-and-hardening`
 
 ```
-git switch -c feat/13-compose-prayer-screen main
+git switch -c feat/14-polish-and-hardening main
 ```
 
-Writing a prayer, replacing the last placeholder: the borderless 32/1.2 title field and the 21/1.6
-body field on the oat ground, the tags it can be given, the 46h keep button, and the three ways in —
-blank from My prayers, on an existing `personalPrayerId`, and on the `seedText` of a kept line.
-`ComposePrayerUiState`, `ComposePrayerAction`, `ComposePrayerViewModel`, `ComposePrayerScreen`,
-`ComposePrayerRoute` per the UI pattern in `CLAUDE.md`, over `PersonalPrayerRepository`.
+The last task: an About screen carrying the attribution the corpus requires and the bundled OFL
+licences, the settings the domain already models (session pacing, keep-screen-on) given somewhere to
+be changed, and a pass over what the twelve screens before it left rough — empty states, content
+descriptions, dynamic type, and the first-run seeding path on a cold install.
 
-**Done when** `:app:assembleDebug` and `:app:testDebugUnitTest` pass, the screen matches
-`docs/DESIGN_SYSTEM.md`, a draft survives a rotation and a trip through process death, an existing
-prayer opens on what was written and saves back to the same row, and `navigation/PlaceholderScreen.kt`
-is gone.
+**Done when** `:app:assembleDebug` and `:app:testDebugUnitTest` pass, the attribution and licences
+are reachable from the app itself, the reader can change the pacing and the keep-screen-on setting
+and see the session obey them, and a cold install on a device with no database comes up seeded.

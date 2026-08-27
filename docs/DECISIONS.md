@@ -149,6 +149,31 @@ answer to "where is this prayer from". The four-colour tile cycle (card, `sageTi
 carries on past the fourth tile so no two neighbours share a colour. Reader-made collections, when
 they arrive, get their own block rather than displacing this one.
 
+## 2026-08-27 — The compose draft is state, but the words are not screen state
+`ComposePrayerViewModel` keeps the draft in `SavedStateHandle` — this is the one screen whose loss
+would cost the reader their own words, and a process death has to come back to what they had
+written. But the words are deliberately not part of `ComposePrayerUiState`: they arrive once as a
+separate `openingDraft`, and what the state carries is the tags and a `canKeep` boolean. A `StateFlow`
+does not re-emit an equal value, so a body that grows by one letter leaves the state untouched and
+the page — including a picker of forty-eight chips — is not redrawn as it is typed into. The fields
+themselves follow the shape the Library's search field set: they own a `TextFieldState`, edit at
+once, and tell the ViewModel afterwards. Nothing ever flows back into a field being typed in.
+
+## 2026-08-27 — Ticking a tag must not move the next one
+The compose picker shows only the ticked tags until "More tags" widens it. Widened, it shows the
+vocabulary in its own order rather than the ticked ones first, which was the first thing tried: on a
+device, ticking a chip re-sorted the row and the next tap landed on a different tag. The keep-a-line
+sheet keeps its own "the prayer's own first" ordering, which is safe because there the order is
+fixed by the prayer rather than by what has been ticked.
+
+## 2026-08-27 — Deleting a written prayer takes two taps
+`CLAUDE.md` says this app holds prayers people wrote, and there is no undo. On My prayers, "Delete"
+only asks: the card itself becomes "Delete this prayer?" with "Keep it" in sage and a quiet "Yes,
+delete" beside it, and the pending question lives in `SavedStateHandle` so a rotation comes back to
+it. The question is asked on the card rather than in a dialog because this design has no dialogs.
+A kept *line* is let go on one tap, which is the right asymmetry: the line is still in the prayer it
+came from, and a written prayer exists nowhere else.
+
 ## 2026-08-25 — The search field owns its text, the ViewModel hears about it
 `LibraryViewModel` keeps the query in `SavedStateHandle`, so it survives a rotation and process
 death. Driving `BasicTextField(value =, onValueChange =)` from that `StateFlow` proved to be a real
