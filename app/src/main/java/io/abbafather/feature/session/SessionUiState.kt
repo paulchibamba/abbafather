@@ -3,20 +3,21 @@ package io.abbafather.feature.session
 import androidx.compose.runtime.Immutable
 
 /**
- * The session as the screen draws it: the whole prayer, and which part of it is being prayed now.
+ * The session as the screen draws it: the whole prayer, and which line is being prayed now.
  *
- * [steps] is every line and every rest, in order — the column the screen scrolls through — and
- * [activeStepIndex] is the only thing an advance changes. Activeness deliberately does not live on
- * the step: if it did, every advance would build a structurally different list and everything keyed
- * on it would fall over. See `docs/DECISIONS.md`.
+ * The prayer runs straight through — the movements are still what it is built of, and the reader
+ * screen marks the rests between them, but a session prays it as one continuous thing. So [lines]
+ * is the prayer's own flat line list and [activeLineIndex] is the only thing an advance changes.
+ * Activeness deliberately does not live on the line: if it did, every advance would build a
+ * structurally different list and everything keyed on it would fall over. See `docs/DECISIONS.md`.
  */
 @Immutable
 data class SessionUiState(
     val title: String = "",
     val attribution: String = "",
-    val steps: List<SessionStepUiState> = emptyList(),
-    val activeStepIndex: Int = 0,
-    val movementTicks: List<MovementTick> = emptyList(),
+    val lines: List<String> = emptyList(),
+    val activeLineIndex: Int = 0,
+    val movementProgress: List<MovementProgress> = emptyList(),
     val canGoBack: Boolean = false,
     /** True at the end of the prayer, where the only move left is "Amen". */
     val isAtEnd: Boolean = false,
@@ -29,37 +30,17 @@ data class SessionUiState(
     val isLoaded: Boolean = false,
 )
 
-/** One item in the column. [key] is its identity in the list and never changes while it is drawn. */
+/**
+ * One movement's worth of progress: how much of it has been prayed, and whether it is the one being
+ * prayed now. Progress is counted in movements rather than in lines because twenty-nine ticks would
+ * be noise — but a movement fills as it is prayed, so a long one still moves under the reader.
+ */
 @Immutable
-sealed interface SessionStepUiState {
-
-    val key: String
-
-    data class Line(val lineIndex: Int, val text: String) : SessionStepUiState {
-        override val key: String get() = "line-$lineIndex"
-    }
-
-    /**
-     * The rest between two movements. It names the movement being entered, because a movement is a
-     * complete turn of the praying and the next one begins something new.
-     */
-    data class Pause(
-        val nextMovementIndex: Int,
-        val nextMovementHeading: String,
-        val nextMovementNumber: Int,
-        val movementCount: Int,
-    ) : SessionStepUiState {
-        override val key: String get() = "pause-$nextMovementIndex"
-    }
-}
-
-/** One movement's worth of progress. Ticks count movements — twenty-nine of them would be noise. */
-enum class MovementTick { Spent, Current, ToCome }
+data class MovementProgress(val prayedFraction: Float, val isCurrent: Boolean)
 
 /** What the reader can do while praying. */
 sealed interface SessionAction {
 
-    /** On to the next line, or out of a breathing pause into the movement it named. */
     data object Advance : SessionAction
 
     data object GoBack : SessionAction

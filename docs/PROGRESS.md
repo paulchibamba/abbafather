@@ -40,48 +40,55 @@ Each task is built on its own branch, verified, then **stopped for approval**. O
 
 ## Task 15 — done in this branch
 
-The session became one lyric column: the whole prayer at once, the step being prayed held on the
-centre of the screen, and the rest resting *in* the prayer rather than instead of it.
+The session became one lyric column, prayed straight through: the whole prayer at once, the line
+being prayed held on the centre of the screen, and no rests between movements.
 
-- `domain/model/SessionStep.kt` — `SessionStep.Line` / `SessionStep.Pause`, lifted out of
-  `SessionViewModel` where they were private, and `Prayer.sessionSteps` as an eager val beside
-  `lines`. It is a pure function of the movements and is now the spine of the screen, so it belongs
-  to the prayer rather than to one mapper.
-- `feature/session/SessionUiState.kt` — `movementLines` and `breathingPause` gone; `steps:
-  List<SessionStepUiState>` and `activeStepIndex` in their place, with `SessionStepUiState.Line` and
-  `.Pause` each carrying a stable `key`. **Activeness is not on the step**: put it there and every
-  advance builds a structurally different list, and everything keyed on it thrashes. See
+- `feature/session/SessionUiState.kt` — `movementLines` and `breathingPause` gone; `lines:
+  List<String>` and `activeLineIndex` in their place. **Activeness is not on the line**: put it there
+  and every advance builds a structurally different list, and everything keyed on it thrashes. See
   `docs/DECISIONS.md`.
 - `feature/session/SessionScreen.kt` — `AnimatedContent`, `PrayedLines` and the bottom-anchored
   `verticalScroll` are gone. A `LazyColumn` inside `BoxWithConstraints` with half a viewport of
-  `contentPadding` at each end, so the first and last steps can reach the centre like every other
-  one; `centreOn` measures the step and scrolls its middle onto the middle of the screen. The first
+  `contentPadding` at each end, so the first and last lines can reach the centre like every other
+  one; `centreOn` measures the line and scrolls its middle onto the middle of the screen. The first
   centring is not animated — the session opens already centred rather than gliding up from nowhere.
-- **The fade ladder** by distance from the active step — full `oat`, .38, .22, .12 — symmetric
+- **The fade ladder** by distance from the active line — full `oat`, .38, .22, .12 — symmetric
   behind and ahead, animated with `animateColorAsState(tween(700))`. The column fades into the
   ground at both ends over 52dp, or it slides under the movement ticks and out from behind the
   Continue button with a hard cut. Found on the device, not in the plan.
+- **The breathing pause is gone from the session.** Once the whole prayer is visible, stopping
+  between movements reads as an interruption of something continuous. The movement boundaries are
+  still real and the reader screen still marks them. That collapsed the step abstraction with it:
+  the position is a line index into `Prayer.lines` again, so `SessionStep`, `Prayer.sessionSteps`
+  and the `session_breathe` / `session_movement_position` strings are deleted, and
+  `SavedStateHandle` carries `sessionLineIndex`.
+- **The ticks fill rather than switch.** Progress is still counted in movements, but the one being
+  prayed fills line by line, so a nine-line movement no longer sits still for nine taps. With the
+  rests gone, this is what says a turn of the praying has been finished.
 - **Free scrolling stays on** and the next advance re-centres. No snap-back timer.
 - **The keys that would have broken it**: the pacing dwell timer and the scroll both keyed on
   `(movementLines, breathingPause)`, and neither changes per advance now. Both key on
-  `activeStepIndex`.
-- Untouched: the header, the ticks, the controls, the glow, the system bars, and all of the
-  ViewModel's stepping and `SavedStateHandle` behaviour.
+  `activeLineIndex`.
+- Untouched: the header, the controls, the glow, the system bars, and the ViewModel's
+  `SavedStateHandle` behaviour.
 - `session_being_prayed` added to `strings.xml` — the ladder says nothing out loud, so the active
-  step carries a `stateDescription`.
-- **Tests**: 150 passing (5 new). The four that asserted the movement-bounded behaviour are
-  rewritten — the session opens on the whole prayer at index 0; an advance leaves `steps` *equal*
-  and moves only the index; every line is in the column in the order it is prayed; and a rest is a
-  step in the list rather than an emptying of it. The other eight survive. New `SessionStepsTest`
-  covers the step list itself: a rest between each movement and the next, none after the last, none
-  at all in a one-movement prayer, and line steps addressing the prayer's own flat line list.
-- Verified: `:app:assembleDebug` and `:app:testDebugUnitTest` pass, and on a Galaxy Note 10+ — a
-  five-movement prayer opens already centred; advancing scrolls one line smoothly to centre with the
-  ladder resolving around it; the rest arrives inline and centres like a line, with the prayer still
-  visible above and below; dragging back and then advancing re-centres; **Unhurried still advances
-  on its own every twelve seconds**, which is the `LaunchedEffect` regression this task could most
-  easily have shipped; and a rotation into landscape holds the active line centred in a much shorter
-  stage. Pacing was put back to "At my own pace" afterwards.
+  line carries a `stateDescription`.
+- **Tests**: 143 passing. The four that asserted the movement-bounded behaviour are rewritten — the
+  session opens on the whole prayer at index 0; an advance leaves `lines` *equal* and moves only the
+  index; the prayer runs straight through its movements without resting; and a movement fills as it
+  is prayed and stays full once it is behind. The three that existed only to assert the rest are
+  gone.
+- Verified: `:app:assembleDebug` and `:app:testDebugUnitTest` pass, and on a Galaxy Note 10+ — "The
+  Great Discovery" (five movements, about thirty lines) opens already centred with the first tick a
+  seventh full; advancing scrolls one line smoothly to centre with the ladder resolving around it;
+  **the last line of a movement is followed straight by the first line of the next, with no rest**,
+  and at that handover the finished tick fills, drops back to `moss @ .55`, and the next one starts
+  filling; the fifth movement's tick fills line by line to the end, where the last line sits centred
+  and the button turns oat for "Amen", which leaves the session; dragging back to reread and then
+  advancing re-centres; **Unhurried still advances on its own every twelve seconds**, which is the
+  `LaunchedEffect` regression this task could most easily have shipped; and a rotation into landscape
+  holds the active line centred in a much shorter stage. Pacing was put back to "At my own pace"
+  afterwards.
 
 ## Task 14 — done and merged
 

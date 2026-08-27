@@ -26,28 +26,14 @@ data class Prayer(
     val attribution: String get() = provenance.shortAttribution
 
     /**
-     * Where the prayer rests. Every movement but the last ends in a pause, because a movement is a
-     * complete turn of the praying and the next one begins something new.
+     * Where the prayer rests, as the reader is shown it: every movement but the last ends in a
+     * pause, because a movement is a complete turn of the praying and the next one begins something
+     * new. The reader marks these; the session prays straight through them.
      */
     val breathingPauseLineIndices: Set<Int> =
         movements.dropLast(1).mapTo(mutableSetOf()) { it.firstLineIndex + it.lines.lastIndex }
 
     fun hasBreathingPauseAfter(lineIndex: Int): Boolean = lineIndex in breathingPauseLineIndices
-
-    /**
-     * Every line of the prayer with a rest between each movement and the next — the whole of what a
-     * session moves through, in the order it is prayed. Held rather than derived on demand because
-     * the session screen draws all of it at once.
-     */
-    val sessionSteps: List<SessionStep> = buildList {
-        movements.forEach { movement ->
-            movement.lines.indices.forEach { position ->
-                add(SessionStep.Line(movement.firstLineIndex + position))
-            }
-            val nextMovement = movements.getOrNull(movement.index + 1)
-            if (nextMovement != null) add(SessionStep.Pause(nextMovement.index))
-        }
-    }
 
     /** The movement a line belongs to — what the session names at a pause and the reader can read about. */
     fun movementOfLine(lineIndex: Int): PrayerMovement =

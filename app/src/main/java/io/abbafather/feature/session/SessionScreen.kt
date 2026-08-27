@@ -5,6 +5,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,7 +28,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -61,7 +62,6 @@ import io.abbafather.core.designsystem.component.AbbaIcons
 import io.abbafather.core.designsystem.component.PillButton
 import io.abbafather.core.designsystem.component.PillButtonDefaults
 import io.abbafather.core.designsystem.component.RoundIconButton
-import io.abbafather.core.designsystem.component.SectionLabel
 import io.abbafather.core.designsystem.theme.AbbaShapes
 import io.abbafather.core.designsystem.theme.AbbaSpacing
 import io.abbafather.core.designsystem.theme.AbbaTheme
@@ -103,11 +103,11 @@ fun SessionScreen(
 ) {
     SessionSystemBars(keepsScreenOn = uiState.keepsScreenOn && uiState.isLoaded)
 
-    // A step that rests moves on by itself; a reader-paced session has no timer at all. The key is
-    // the step being prayed, so the rest starts again on each one rather than running through them.
+    // A paced line moves on by itself; a reader-paced session has no timer at all. The key is the
+    // line being prayed, so the rest starts again on each one rather than running through them.
     val dwellMillis = uiState.autoAdvanceAfterMillis
     if (dwellMillis != null) {
-        LaunchedEffect(uiState.activeStepIndex, dwellMillis) {
+        LaunchedEffect(uiState.activeLineIndex, dwellMillis) {
             delay(dwellMillis)
             onAction(SessionAction.Advance)
         }
@@ -129,7 +129,7 @@ fun SessionScreen(
             SessionHeader(
                 title = uiState.title,
                 attribution = uiState.attribution,
-                movementTicks = uiState.movementTicks,
+                movementProgress = uiState.movementProgress,
                 onLeave = { onAction(SessionAction.Leave) },
             )
 
@@ -173,7 +173,7 @@ private fun SessionSystemBars(keepsScreenOn: Boolean) {
 private fun SessionHeader(
     title: String,
     attribution: String,
-    movementTicks: List<MovementTick>,
+    movementProgress: List<MovementProgress>,
     onLeave: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -201,14 +201,17 @@ private fun SessionHeader(
             color = colors.oatByline,
         )
         Spacer(Modifier.height(18.dp))
-        MovementTicks(ticks = movementTicks)
+        MovementTicks(progress = movementProgress)
     }
 }
 
-/** How far through the prayer this is, counted in movements. Twenty-nine ticks would be noise. */
+/**
+ * How far through the prayer this is, counted in movements — twenty-nine ticks would be noise. The
+ * movement being prayed fills as it goes, so a long one still moves under the reader.
+ */
 @Composable
 private fun MovementTicks(
-    ticks: List<MovementTick>,
+    progress: List<MovementProgress>,
     modifier: Modifier = Modifier,
 ) {
     val colors = AbbaTheme.colors
@@ -216,21 +219,33 @@ private fun MovementTicks(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        ticks.forEach { tick ->
+        progress.forEach { movement ->
             // A movement already prayed keeps its moss and only stands back from the one being
             // prayed now; a 3dp bar loses an alpha layer, so the strength is in the colour itself.
-            val tickColor = when (tick) {
-                MovementTick.Current -> colors.moss
-                MovementTick.Spent -> colors.moss.copy(alpha = SpentTickAlpha)
-                MovementTick.ToCome -> colors.oatTick
+            val filledColor = if (movement.isCurrent) {
+                colors.moss
+            } else {
+                colors.moss.copy(alpha = SpentTickAlpha)
             }
+            val filled by animateFloatAsState(
+                targetValue = movement.prayedFraction,
+                animationSpec = tween(FadeMillis),
+                label = "movementProgress",
+            )
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .height(3.dp)
                     .clip(AbbaShapes.Pill)
-                    .background(tickColor),
-            )
+                    .background(colors.oatTick),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(filled)
+                        .background(filledColor),
+                )
+            }
         }
     }
 }
@@ -259,16 +274,15 @@ private fun SessionStage(
             state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(vertical = halfViewport),
-            verticalArrangement = Arrangement.spacedBy(StepGap),
+            verticalArrangement = Arrangement.spacedBy(LineGap),
         ) {
             itemsIndexed(
-                items = uiState.steps,
-                key = { _, step -> step.key },
-                contentType = { _, step -> step::class },
-            ) { index, step ->
-                SessionStepItem(
-                    step = step,
-                    distanceFromActive = index - uiState.activeStepIndex,
+                items = uiState.lines,
+                key = { index, _ -> index },
+            ) { index, line ->
+                PrayedLine(
+                    text = line,
+                    distanceFromActive = index - uiState.activeLineIndex,
                 )
             }
         }
@@ -292,16 +306,16 @@ private fun SessionStage(
         )
     }
 
-    LaunchedEffect(uiState.activeStepIndex, uiState.steps.size) {
-        if (uiState.steps.isEmpty()) return@LaunchedEffect
+    LaunchedEffect(uiState.activeLineIndex, uiState.lines.size) {
+        if (uiState.lines.isEmpty()) return@LaunchedEffect
         // Nothing has a height before the first pass, and an unmeasured column cannot be centred.
         snapshotFlow { listState.layoutInfo.totalItemsCount }.first { it > 0 }
-        listState.centreOn(uiState.activeStepIndex, isAnimated = hasOpened)
+        listState.centreOn(uiState.activeLineIndex, isAnimated = hasOpened)
         hasOpened = true
     }
 }
 
-/** Puts the step's middle on the middle of the screen. */
+/** Puts the line's middle on the middle of the screen. */
 private suspend fun LazyListState.centreOn(index: Int, isAnimated: Boolean) {
     if (offsetFromCentreOf(index) == null) {
         // Too far away to have been measured — land on it first, and correct once it has a height.
@@ -311,50 +325,23 @@ private suspend fun LazyListState.centreOn(index: Int, isAnimated: Boolean) {
     if (isAnimated) animateScrollBy(distance) else scrollBy(distance)
 }
 
-/** How far a step's middle stands from the middle of the screen, or null if it is not measured. */
+/** How far a line's middle stands from the middle of the screen, or null if it is not measured. */
 private fun LazyListState.offsetFromCentreOf(index: Int): Int? {
-    val step = layoutInfo.visibleItemsInfo.firstOrNull { it.index == index } ?: return null
+    val line = layoutInfo.visibleItemsInfo.firstOrNull { it.index == index } ?: return null
     val viewportCentre = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
-    return step.offset + step.size / 2 - viewportCentre
-}
-
-@Composable
-private fun SessionStepItem(
-    step: SessionStepUiState,
-    distanceFromActive: Int,
-    modifier: Modifier = Modifier,
-) {
-    val isBeingPrayed = distanceFromActive == 0
-    val beingPrayedDescription = stringResource(R.string.session_being_prayed)
-    // Standing forward is the only thing that says "this is the line"; a screen reader is told.
-    val stepModifier = modifier
-        .fillMaxWidth()
-        .semantics { if (isBeingPrayed) stateDescription = beingPrayedDescription }
-    val alpha = alphaAtDistance(distanceFromActive)
-
-    when (step) {
-        is SessionStepUiState.Line -> PrayedLine(
-            text = step.text,
-            alpha = alpha,
-            modifier = stepModifier,
-        )
-
-        is SessionStepUiState.Pause -> BreathingPause(
-            pause = step,
-            alpha = alpha,
-            modifier = stepModifier,
-        )
-    }
+    return line.offset + line.size / 2 - viewportCentre
 }
 
 @Composable
 private fun PrayedLine(
     text: String,
-    alpha: Float,
+    distanceFromActive: Int,
     modifier: Modifier = Modifier,
 ) {
+    val isBeingPrayed = distanceFromActive == 0
+    val beingPrayedDescription = stringResource(R.string.session_being_prayed)
     val lineColor by animateColorAsState(
-        targetValue = AbbaTheme.colors.oat.copy(alpha = alpha),
+        targetValue = AbbaTheme.colors.oat.copy(alpha = alphaAtDistance(distanceFromActive)),
         animationSpec = tween(FadeMillis),
         label = "sessionLineColor",
     )
@@ -362,60 +349,12 @@ private fun PrayedLine(
         text = text,
         style = AbbaTheme.type.sessionLine,
         color = lineColor,
-        modifier = modifier,
+        // Standing forward is the only thing that says "this is the line"; a reader who is being
+        // read the prayer is told in words.
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics { if (isBeingPrayed) stateDescription = beingPrayedDescription },
     )
-}
-
-/**
- * A movement is a complete turn of the praying, so the session rests before the next one and names
- * what it is about to ask. It rests *in* the column rather than instead of it: the rest is a place
- * in the prayer, and the prayer is still all around it.
- */
-@Composable
-private fun BreathingPause(
-    pause: SessionStepUiState.Pause,
-    alpha: Float,
-    modifier: Modifier = Modifier,
-) {
-    val colors = AbbaTheme.colors
-    val mossColor by animateColorAsState(
-        targetValue = colors.moss.copy(alpha = alpha),
-        animationSpec = tween(FadeMillis),
-        label = "pauseMossColor",
-    )
-    val headingColor by animateColorAsState(
-        targetValue = colors.oat.copy(alpha = alpha),
-        animationSpec = tween(FadeMillis),
-        label = "pauseHeadingColor",
-    )
-    Column(modifier = modifier.padding(vertical = PauseAir)) {
-        SectionLabel(text = stringResource(R.string.session_breathe), color = mossColor)
-        Spacer(Modifier.height(14.dp))
-        Box(
-            modifier = Modifier
-                .width(44.dp)
-                .height(2.dp)
-                .clip(AbbaShapes.Pill)
-                .background(mossColor),
-        )
-        Spacer(Modifier.height(26.dp))
-        Text(
-            text = pause.nextMovementHeading,
-            style = AbbaTheme.type.sessionLine,
-            color = headingColor,
-        )
-        Spacer(Modifier.height(14.dp))
-        Text(
-            text = stringResource(
-                R.string.session_movement_position,
-                pause.nextMovementNumber,
-                pause.movementCount,
-            ),
-            style = AbbaTheme.type.metaSans,
-            // The quieter of the two at every distance, as `oatHint` is quieter than `oat`.
-            color = headingColor.copy(alpha = headingColor.alpha * HintFraction),
-        )
-    }
 }
 
 /** Translucent while there is praying left, and oat at the end, where the only move is "Amen". */
@@ -504,7 +443,7 @@ private fun BreathingGlow(modifier: Modifier = Modifier) {
 }
 
 /**
- * How far a step stands back from the one being prayed. Behind and ahead read the same: the prayer
+ * How far a line stands back from the one being prayed. Behind and ahead read the same: the prayer
  * is one continuous thing, and dimming what is coming harder than what is past would say "do not
  * look ahead" while showing it anyway.
  *
@@ -525,16 +464,10 @@ private fun alphaAtDistance(distance: Int): Float = when (abs(distance)) {
  */
 private const val FadeMillis = 700
 
-private val StepGap = 18.dp
+private val LineGap = 18.dp
 
 /** How far the column fades into the ground at each end of the stage. */
 private val EdgeFade = 52.dp
-
-/** A rest is a rest: it takes more air around it than a line does. */
-private val PauseAir = 12.dp
-
-/** `oatHint` stands to `oat` as this stands to whatever the heading is at this distance. */
-private const val HintFraction = 0.45f
 
 /** The design's `glow`: .5/1.0 to .85/1.06 over nine seconds, breathing both ways. */
 private const val GlowMillis = 9_000
@@ -544,20 +477,11 @@ private val GlowRise = (-60).dp
 /** Movements already prayed keep their moss, but stand back from the one being prayed now. */
 private const val SpentTickAlpha = 0.55f
 
-private val previewSteps = listOf(
-    SessionStepUiState.Line(0, "Father, you are endlessly generous."),
-    SessionStepUiState.Line(
-        1,
-        "Thank you for the grace you keep showing me, even though I have never deserved it.",
-    ),
-    SessionStepUiState.Pause(
-        nextMovementIndex = 2,
-        nextMovementHeading = "Admitting how deeply I need you",
-        nextMovementNumber = 3,
-        movementCount = 4,
-    ),
-    SessionStepUiState.Line(2, "No one needs your grace more than I do."),
-    SessionStepUiState.Line(3, "Hold me fast, and bring me home."),
+private val previewLines = listOf(
+    "Father, you are endlessly generous.",
+    "Thank you for the grace you keep showing me, even though I have never deserved it.",
+    "No one needs your grace more than I do.",
+    "Hold me fast, and bring me home.",
 )
 
 @Preview
@@ -568,13 +492,13 @@ private fun SessionScreenPreview() {
             uiState = SessionUiState(
                 title = "Amazing Grace",
                 attribution = "The Valley of Vision, adapted",
-                steps = previewSteps,
-                activeStepIndex = 1,
-                movementTicks = listOf(
-                    MovementTick.Spent,
-                    MovementTick.Current,
-                    MovementTick.ToCome,
-                    MovementTick.ToCome,
+                lines = previewLines,
+                activeLineIndex = 1,
+                movementProgress = listOf(
+                    MovementProgress(prayedFraction = 1f, isCurrent = false),
+                    MovementProgress(prayedFraction = 0.5f, isCurrent = true),
+                    MovementProgress(prayedFraction = 0f, isCurrent = false),
+                    MovementProgress(prayedFraction = 0f, isCurrent = false),
                 ),
                 canGoBack = true,
                 isLoaded = true,
@@ -584,24 +508,22 @@ private fun SessionScreenPreview() {
     }
 }
 
-/** The rest, with the prayer still around it — which is the whole of what this screen changed. */
+/** The end of the prayer, where the only move left is "Amen". */
 @Preview
 @Composable
-private fun SessionPausePreview() {
+private fun SessionEndPreview() {
     AbbaTheme {
         SessionScreen(
             uiState = SessionUiState(
                 title = "Amazing Grace",
                 attribution = "The Valley of Vision, adapted",
-                steps = previewSteps,
-                activeStepIndex = 2,
-                movementTicks = listOf(
-                    MovementTick.Spent,
-                    MovementTick.Spent,
-                    MovementTick.Current,
-                    MovementTick.ToCome,
-                ),
+                lines = previewLines,
+                activeLineIndex = previewLines.lastIndex,
+                movementProgress = List(4) {
+                    MovementProgress(prayedFraction = 1f, isCurrent = it == 3)
+                },
                 canGoBack = true,
+                isAtEnd = true,
                 isLoaded = true,
             ),
             onAction = {},
