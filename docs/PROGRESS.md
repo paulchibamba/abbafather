@@ -28,7 +28,7 @@ you love; write your own prayers. No accounts, no network, no notifications.
 | 11 | Saved screen | `feat/11-saved-screen` | merged, `task-11` |
 | 12 | My prayers screen | `feat/12-my-prayers-screen` | merged, `task-12` |
 | 13 | Compose prayer screen | `feat/13-compose-prayer-screen` | merged, `task-13` |
-| 14 | Polish and hardening — incl. About and attribution | `feat/14-polish-and-hardening` | done in this branch, awaiting approval |
+| 14 | Polish and hardening — incl. About and attribution | `feat/14-polish-and-hardening` | merged, `task-14` |
 
 **The board was renumbered on 2026-08-26**, when `docs/prayers/` arrived with the real catalogue. The
 old tasks 8–12 became 10–14; tasks 8 and 9 are new. See `docs/DECISIONS.md` for why.
@@ -36,7 +36,7 @@ old tasks 8–12 became 10–14; tasks 8 and 9 are new. See `docs/DECISIONS.md` 
 Each task is built on its own branch, verified, then **stopped for approval**. Only after approval:
 `git switch main && git merge --no-ff <branch> && git tag task-<nn>`.
 
-## Task 14 — done in this branch
+## Task 14 — done and merged
 
 The last task: the settings and the notices given a page, and a pass over what the twelve screens
 before it left rough.
@@ -538,11 +538,7 @@ The UI is still the untouched template "Hello Android" screen. That is expected 
 
 ## Start here for the next task
 
-Every task on the board is built. Task 14 is waiting on approval; once it is given:
-
-```
-git switch main && git merge --no-ff feat/14-polish-and-hardening && git tag task-14
-```
+**Every task on the board is built, merged and tagged.** `main` is at `task-14`.
 
 What is deliberately not built, and would be the start of any board after this one: ambient sound
 (the domain models it, nothing plays it), the release build's signing and shrinking, and a sync layer
