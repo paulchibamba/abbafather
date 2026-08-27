@@ -27,7 +27,7 @@ you love; write your own prayers. No accounts, no network, no notifications.
 | 10 | Prayer session — movement-aware | `feat/10-prayer-session` | merged, `task-10` |
 | 11 | Saved screen | `feat/11-saved-screen` | merged, `task-11` |
 | 12 | My prayers screen | `feat/12-my-prayers-screen` | merged, `task-12` |
-| 13 | Compose prayer screen | `feat/13-compose-prayer-screen` | built, awaiting approval |
+| 13 | Compose prayer screen | `feat/13-compose-prayer-screen` | merged, `task-13` |
 | 14 | Polish and hardening — incl. About and attribution | `feat/14-polish-and-hardening` | not started |
 
 **The board was renumbered on 2026-08-26**, when `docs/prayers/` arrived with the real catalogue. The
@@ -36,7 +36,7 @@ old tasks 8–12 became 10–14; tasks 8 and 9 are new. See `docs/DECISIONS.md` 
 Each task is built on its own branch, verified, then **stopped for approval**. Only after approval:
 `git switch main && git merge --no-ff <branch> && git tag task-<nn>`.
 
-## Task 13 — built, awaiting approval
+## Task 13 — done and merged
 
 Writing a prayer, replacing the last placeholder. The page is the reader's own words on the oat
 ground: no boxes, no labels, nothing between them and what they are saying.
