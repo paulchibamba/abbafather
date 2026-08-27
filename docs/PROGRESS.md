@@ -29,6 +29,8 @@ you love; write your own prayers. No accounts, no network, no notifications.
 | 12 | My prayers screen | `feat/12-my-prayers-screen` | merged, `task-12` |
 | 13 | Compose prayer screen | `feat/13-compose-prayer-screen` | merged, `task-13` |
 | 14 | Polish and hardening — incl. About and attribution | `feat/14-polish-and-hardening` | merged, `task-14` |
+| 15 | Session lyric flow — the whole prayer, active line centred | `feat/15-session-lyric-flow` | not started |
+| 16 | Scripture text — YouVersion SDK, reader's chosen version | `feat/16-scripture-text` | not started |
 
 **The board was renumbered on 2026-08-26**, when `docs/prayers/` arrived with the real catalogue. The
 old tasks 8–12 became 10–14; tasks 8 and 9 are new. See `docs/DECISIONS.md` for why.
@@ -538,8 +540,181 @@ The UI is still the untouched template "Hello Android" screen. That is expected 
 
 ## Start here for the next task
 
-**Every task on the board is built, merged and tagged.** `main` is at `task-14`.
+### Task 15 — `feat/15-session-lyric-flow`
 
-What is deliberately not built, and would be the start of any board after this one: ambient sound
-(the domain models it, nothing plays it), the release build's signing and shrinking, and a sync layer
-— the schema is shaped for one and nothing else assumes it.
+```
+git switch -c feat/15-session-lyric-flow main
+```
+
+**The session becomes one lyric column.** Today it shows only the current movement — that movement's
+first line down to the line being prayed, earlier lines at 38% oat — and cross-fades the whole block
+on every advance with `AnimatedContent`. You cannot see what is coming, and a breathing pause wipes
+the screen. It becomes the whole prayer in one `LazyColumn`, the active step held on the centre of
+the screen, what is behind and ahead visible but faded, and a smooth animated scroll to the next step.
+
+- **State.** `SessionUiState` drops `movementLines` and `breathingPause` for `steps:
+  List<SessionStepUiState>` and `activeStepIndex: Int`. A step is a `Line(lineIndex, text)` or a
+  `Pause(nextMovementIndex, heading, movementNumber, movementCount)`, each with a stable `key` for
+  the list. `SessionLine` and `BreathingPauseUiState` go. **Activeness must not live on the item** —
+  put it there and every advance yields a structurally different list that thrashes everything keyed
+  on it. It is one integer.
+- **`SessionStep` moves to `domain/`.** It and `sessionSteps()` are private in `SessionViewModel`
+  today; they are a pure function of a `Prayer` and are now the spine of the screen. `Prayer` gains
+  `sessionSteps` as an eager val beside `lines`, with a pure test of its own.
+- **The trap: two stale `LaunchedEffect` keys.** The pacing dwell timer and the stage scroll both key
+  on `(movementLines, breathingPause)`. Once `steps` is the whole prayer neither changes per advance,
+  so both must key on `activeStepIndex`. Get it wrong and a paced session advances once and stops.
+- **Centring.** No `LazyColumn` + `animateScrollToItem` exists anywhere in the app yet.
+  `BoxWithConstraints` for the viewport, `contentPadding` of half a viewport top and bottom so the
+  first and last steps can reach the centre, then `animateScrollToItem(index, scrollOffset =
+  -itemHeight / 2)` with the height read from `layoutInfo.visibleItemsInfo`. Nothing is measured on
+  the first pass — wait on `snapshotFlow { layoutInfo.totalItemsCount }.first { it > 0 }`, and leave
+  the *first* centring un-animated so the session opens already centred rather than gliding up from
+  nowhere.
+- **Free scrolling stays on** and the next advance re-centres. No snap-back timer: a session that
+  yanks the page out of the reader's hand is the opposite of what this screen is for.
+- **The fade ladder** by distance from the active step — 0 → full `oat`, 1 → .38, 2 → .22, 3 and
+  beyond → .12, every rung the value of an existing token. Symmetric behind and ahead: the prayer is
+  one continuous thing, and dimming the future harder says "you may not look ahead" while showing it
+  anyway. `animateColorAsState(tween(700))` — slower than the 140ms press idiom, faster than the
+  1000ms `fadeup`, which described a whole block being replaced. Nothing is replaced here. If it
+  still reads as lag on a device, drop the tween; the scroll already carries the change of attention.
+- **The pause goes inline** — "BREATHE", the 44×2 moss rule, the next heading, "Movement 3 of 6" —
+  same content, now an item centred by the same code as a line.
+- **Untouched**: `SessionHeader`, `MovementTicks`, `SessionControls`, `BreathingGlow`,
+  `SessionSystemBars`, and all of the ViewModel's stepping and `SavedStateHandle` behaviour.
+- **Being read the screen**: the whole prayer in the tree is a gain for TalkBack, but the colour
+  ladder says nothing out loud, so the active item carries a `stateDescription`.
+- **Tests**: `SessionViewModelTest`'s first four assert the movement-bounded behaviour and are
+  rewritten — opens on the whole prayer at index 0; `steps` is *equal* before and after an advance
+  with only the index moving; every line present in order; a pause is a step in the list rather than
+  an emptying of it. The other eight survive with mechanical edits. New `SessionStepsTest` in
+  `domain`. Both `@Preview`s construct `SessionUiState` literally and must be rewritten — the second
+  should show a pause *in* the column with lines above and below, which is the whole point.
+- **Docs this task owns**: `docs/DECISIONS.md` — "2026-08-27 — A movement is what the session screen
+  holds" rejects showing every line as "a wall of text" and must be marked superseded, with a new
+  entry saying why it is not one on a device. `docs/DESIGN_SYSTEM.md` — the session rows gain lines
+  *ahead*, and `fadeup` becomes a fade alone, the 14px rise now being the scroll itself.
+
+**Done when** `:app:assembleDebug` and `:app:testDebugUnitTest` pass, and on a device: the longest
+prayer ("The Deeps", 45 lines, 8 movements) opens already centred; an advance scrolls one line
+smoothly to centre with the ladder resolving behind it; a pause centres like a line; dragging back
+and then advancing re-centres; **pacing set to Unhurried still advances every 12 seconds** — that is
+the `LaunchedEffect` regression; and a rotation mid-prayer and at a pause lands on the same step,
+centred.
+
+### Task 16 — `feat/16-scripture-text`
+
+```
+git switch -c feat/16-scripture-text main
+```
+
+**The reader can ask for the verse.** The reader's scripture sheet gains the passage text, fetched
+live from the YouVersion Platform, **disclosed behind a tap** so the sheet stays as calm as it is,
+and the reader chooses which Bible version to read in.
+
+**Our corpus still carries no verse text.** Nothing goes into `docs/prayers/`, the built asset,
+`prayer_scriptures` or `ScriptureReference`. What changes is that the app can now *show* text it does
+not *hold*.
+
+**Blocked on an app key** registered at platform.youversion.com. Everything but the live fetch —
+parsing, the setting, the picker, the failure states — is buildable and unit-testable without one,
+but nothing can be confirmed on a device until it exists.
+
+*The SDK, established — do not re-research it:*
+
+- `com.youversion.platform:platform-core:1.10.0`, on Maven Central, Apache-2.0, minSdk 23, Kotlin
+  2.2+. The app is minSdk 31 / Kotlin 2.2.10 / compileSdk 37, so it fits, and `mavenCentral()` is
+  already declared so `FAIL_ON_PROJECT_REPOS` needs no change.
+- It brings **Ktor, OkHttp, Koin and Kermit** transitively — the first networking in an app that has
+  had none. Koin runs the SDK's own graph and does not touch Hilt.
+- Configured once in `AbbaFatherApplication.onCreate` with
+  `YouVersionPlatformConfiguration.configure(context, appKey)`.
+- `YouVersionApi.bibles.passage(BibleReference, format = "html"): BiblePassage` (content is HTML) and
+  `versions(languageCode)`. Failures arrive as `YouVersionNetworkException`.
+- `BibleReference(versionId, bookUSFM, chapter, verseStart, verseEnd)`;
+  `BibleDefaults.VERSION_ID = 3034` is the Berean Standard Bible, freely licensed — the right
+  default. The SDK keeps its own file cache of what it fetches.
+- **Use `platform-core` only, not `platform-ui`'s `BibleText` composable.** `BibleText` would put a
+  network call inside `feature/reader/`, which imports only `domain/` and `core/`; wrapping it in
+  `core/` only makes `core/` do IO. And the state discipline collapses — loading, offline,
+  not-licensed, which passage is open and which version is chosen all have to be in `ReaderUiState`
+  to be testable and to survive rotation. (`BibleTextOptions` does take a `fontFamily`, so styling is
+  not what decides this; layering is.)
+
+*The corpus, measured:* **2,606 passages, 1,100 distinct references, 49 book names**, every one
+saying ESV. All match `Book Chapter:Verse[-Verse]` except four, and those four decide the parser's
+signature: `1 Corinthians 1:18, 24` is a comma list and must become **two** addresses rather than the
+span 18–24, which would show five verses the prayer does not claim; and `Jude 20-21`, `Jude 22-23`,
+`Jude 24-25` name a single-chapter book, so there is no chapter in the reference. So
+`parseScriptureReference(reference): List<PassageAddress>`, and an **empty list** is a reference this
+app cannot look up — that passage offers no disclosure action and the sheet is exactly what it is
+today. `domain/model/BibleBook.kt` carries the 66-book USFM table with the five one-chapter books
+flagged and the alternate spellings ("Psalms", "Song of Songs", "Canticles"). The guard test parses
+all 1,100 references out of the committed asset, so a mistyped reference in a future prayer fails in
+CI rather than on a reader's phone.
+
+*Shape:*
+
+- `domain/repository/ScriptureRepository` — `isConfigured`, `getPassageText(addresses, versionId)`,
+  `getVersions()`. It returns a **result, not an exception**: `PassageText` is
+  `Text(paragraphs, versionAbbreviation) | Offline | Unavailable`, because being offline is a state
+  this screen draws, not an error path.
+- `data/scripture/YouVersionScriptureRepository` — the one repository impl that is **not**
+  `Offline*`-prefixed, because calling it that would be a lie. Add the exception to `CLAUDE.md`.
+- HTML flattened to plain paragraphs in `data/` with `HtmlCompat` and set in our own face
+  (`prayerExcerpt` at `inkSecondary`), quieter than `sheetLine`: the disclosed text is a reference
+  the reader asked for, not the sheet's subject. Not `AnnotatedString` — that would drag Compose text
+  into a repository for spans of one to three verses.
+- **No Room table, no migration, no cache of our own.** The SDK's cache is the publisher's to
+  manage, and a table of someone else's scripture is the exact thing the corpus rule exists to prevent.
+
+*The reader picks the version:* `PrayerSettings` gains `bibleVersionId` (default 3034) **and**
+`bibleVersionAbbreviation` (default "BSB") — storing the abbreviation is what lets the sheet label
+text offline without a round trip. One `setBibleVersion(id, abbreviation)` writing both in a single
+`edit {}`. A version id is a setting, not content, so DataStore is right and no migration is
+involved. The picker lives in the About settings block, above the passage prose it modifies: closed
+it reads "Berean Standard Bible (BSB)" with a "Choose another" action; open, a `Column` of tappable
+rows — not chips, since there are hundreds and a `FlowRow` of hundreds is a wall. The list is fetched
+**on disclosure**, never on screen open, so About still opens instantly with no connection; offline,
+the card keeps showing the stored choice and says so quietly.
+
+*The honest labelling problem:* the reference line says `Isaiah 57:15 · ESV` because that is the
+translation the prayer was written from, and the disclosed text will usually be some other version.
+**Do not relabel the reference line to match** — that would make the corpus claim something it does
+not. The text carries its own attribution and the two coexist.
+
+*Failure states:* `Idle` offers "Read the passage"; `Loading` is one quiet line, no spinner — this
+app has none; `Text` is the paragraphs and their attribution; `Offline` says the words need a
+connection and the reference is here for your own Bible; `Unavailable` says the passage is not in
+that version. No action at all when the reference did not parse, or when the build has no key.
+
+*The app key:* `local.properties` (already git-ignored) into a `buildConfigField`, which needs
+`buildFeatures { buildConfig = true }` — currently off — with an environment variable as a fallback.
+**A build with no key must still build, run and pass its tests**: no key means the SDK is never
+configured, no disclosure is offered, and the app is exactly what ships today. The manifest gains
+`INTERNET`, the app's first permission — but not `ACCESS_NETWORK_STATE`, since a failed request is
+the same answer and one fewer permission on the listing.
+
+*Docs this task owns:* every place stating the promise needs the same revision — *our corpus carries
+no verse text; text shown is fetched live in the version the reader chose and is never written to our
+database*. That is `CLAUDE.md`'s content rule; `docs/DECISIONS.md`'s "Scripture is a reference, never
+the verse" and "What 'no verse text' actually means", both amended rather than deleted;
+`docs/ARCHITECTURE.md`'s "No network layer exists and none is planned", which stops being true;
+`about_scripture_body` and the About screen's Scripture block; three places in `README.md`; and the
+KDoc on `PrayerScriptureEntity`, `ScriptureReference` and `ScriptureSheet`. Two new decisions: why
+the text is borrowed and never kept, and why the reference says ESV while the words say the reader's
+version. **Read the YouVersion Platform terms before shipping** — they may require a particular
+attribution string or link, and the SDK's own README documents none.
+
+**Done when** `:app:assembleDebug` and `:app:testDebugUnitTest` pass **with no key configured**, and
+on a device with one: a passage opens and shows the verse in the chosen version; airplane mode shows
+the quiet offline line while every other screen is unchanged; changing the version in About changes
+what a reopened passage shows; and deleting the key from `local.properties` and rebuilding gives back
+today's app exactly.
+
+### After those
+
+What is still deliberately not built: ambient sound (the domain models it, nothing plays it), the
+release build's signing and shrinking, and a sync layer — the schema is shaped for one and nothing
+else assumes it.
