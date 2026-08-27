@@ -73,6 +73,21 @@
         <item quantity="other">%1$d passages</item>
     </plurals>
 
+    <string name="saved_title">Saved</string>
+    <string name="saved_read_the_prayer">Read the prayer</string>
+    <string name="saved_make_it_mine">Make it my prayer</string>
+    <string name="saved_release">Let it go</string>
+    <string name="saved_source_prayer">%1$s · %2$s</string>
+    <string name="saved_source_and_date">From %1$s · kept %2$s</string>
+    <string name="saved_kept_on">Kept %1$s</string>
+    <string name="saved_empty_title">Nothing kept yet.</string>
+    <string name="saved_empty_hint">Tap a line while you are reading and it will wait for you here.</string>
+
+    <plurals name="saved_subtitle">
+        <item quantity="one">%1$d line you wanted to keep.</item>
+        <item quantity="other">%1$d lines you wanted to keep.</item>
+    </plurals>
+
     <string name="session_leave">Leave this prayer</string>
     <string name="session_previous">Back a line</string>
     <string name="session_continue">Continue</string>
