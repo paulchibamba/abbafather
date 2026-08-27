@@ -3,19 +3,19 @@ package io.abbafather.feature.session
 import androidx.compose.runtime.Immutable
 
 /**
- * The session as the screen needs it: the movement being prayed so far, or the pause between two
- * movements, and the ticks saying how far through the prayer this is.
+ * The session as the screen draws it: the whole prayer, and which part of it is being prayed now.
  *
- * [breathingPause] is null exactly when a line is being prayed, so the screen shows one or the other
- * without asking a second question.
+ * [steps] is every line and every rest, in order — the column the screen scrolls through — and
+ * [activeStepIndex] is the only thing an advance changes. Activeness deliberately does not live on
+ * the step: if it did, every advance would build a structurally different list and everything keyed
+ * on it would fall over. See `docs/DECISIONS.md`.
  */
 @Immutable
 data class SessionUiState(
     val title: String = "",
     val attribution: String = "",
-    /** The current movement from its first line down to the one being prayed now. */
-    val movementLines: List<SessionLine> = emptyList(),
-    val breathingPause: BreathingPauseUiState? = null,
+    val steps: List<SessionStepUiState> = emptyList(),
+    val activeStepIndex: Int = 0,
     val movementTicks: List<MovementTick> = emptyList(),
     val canGoBack: Boolean = false,
     /** True at the end of the prayer, where the only move left is "Amen". */
@@ -29,20 +29,29 @@ data class SessionUiState(
     val isLoaded: Boolean = false,
 )
 
-/** A line on the session screen. Only one is [isCurrent]; the others are already prayed. */
+/** One item in the column. [key] is its identity in the list and never changes while it is drawn. */
 @Immutable
-data class SessionLine(val text: String, val isCurrent: Boolean)
+sealed interface SessionStepUiState {
 
-/**
- * Where the session rests between two movements. It names the movement being entered, because a
- * movement is a complete turn of the praying and the next one begins something new.
- */
-@Immutable
-data class BreathingPauseUiState(
-    val nextMovementHeading: String,
-    val nextMovementNumber: Int,
-    val movementCount: Int,
-)
+    val key: String
+
+    data class Line(val lineIndex: Int, val text: String) : SessionStepUiState {
+        override val key: String get() = "line-$lineIndex"
+    }
+
+    /**
+     * The rest between two movements. It names the movement being entered, because a movement is a
+     * complete turn of the praying and the next one begins something new.
+     */
+    data class Pause(
+        val nextMovementIndex: Int,
+        val nextMovementHeading: String,
+        val nextMovementNumber: Int,
+        val movementCount: Int,
+    ) : SessionStepUiState {
+        override val key: String get() = "pause-$nextMovementIndex"
+    }
+}
 
 /** One movement's worth of progress. Ticks count movements — twenty-nine of them would be noise. */
 enum class MovementTick { Spent, Current, ToCome }

@@ -308,6 +308,8 @@ the pause rather than to the line before it. The steps themselves are rebuilt fr
 demand: they are a pure function of the prayer, so there is nothing to keep in step.
 
 ## 2026-08-27 — A movement is what the session screen holds
+**Superseded 2026-08-28 — see "The session is one lyric column".**
+
 The design asks for the prayer one line at a time with earlier lines fading. "Earlier" is bounded to
 the **current movement**: the screen shows the movement from its first line down to the one being
 prayed, and the breathing pause clears the ground so the next movement begins on an empty screen.
@@ -365,3 +367,32 @@ greeting is one of forty-odd Authorized Version verses held in `DailyVerses`, an
 domain. The claim that matters is about the corpus — the passages a *prayer* rests on are references
 and translation names only, and no prayer file or the built asset holds a word of them. The copy now
 says both, because a promise stated more broadly than it is kept is not a promise.
+
+## 2026-08-28 — The session is one lyric column
+Supersedes "A movement is what the session screen holds". The whole prayer is in the column at once
+— every line and every breathing pause, one `LazyColumn` with half a viewport of air at each end —
+and the step being prayed is held on the centre of the screen. The earlier decision called this "a
+wall of text"; on a device it is not, because distance does the work the movement boundary used to:
+the step being prayed is at full oat, its neighbours at .38, then .22, then .12, and the column
+fades into the ground at both ends. Three lines are legible and the rest is a texture saying there
+is more of this. What the reader gains is what was missing — they can see where the prayer is going,
+and look back at what they have just prayed without leaving the line they are on.
+
+`SessionUiState` carries `steps` and one `activeStepIndex`. Activeness deliberately does not live on
+the step: if it did, every advance would build a structurally different list and everything keyed on
+it would thrash. The list is equal across an advance and only the index moves.
+
+## 2026-08-28 — The breathing pause rests in the column, not instead of it
+The pause used to replace the lines entirely — an empty ground with "Breathe" on it. It is now an
+item like any other, scrolled to the centre like a line, with the prayer still visible around it.
+That is what a rest actually is: a place in the prayer rather than an absence of one. `SessionStep`
+already modelled it that way — the screen is only catching up with the ViewModel.
+
+## 2026-08-28 — `fadeup` is a fade now, because the rise is the scroll
+The design gives `fadeup` as a 14px rise and a fade over about a second, applied to each newly
+revealed session line. The old screen applied it to the whole movement block through
+`AnimatedContent`, which cross-faded everything on every advance. There is nothing to cross-fade in
+a column that never changes, so the rise is the scroll itself and the fade is a 700ms
+`animateColorAsState` on distance from the active step. Shorter than the design's second because
+nothing is being replaced: the scroll settles in about half that, and a fade still running after the
+movement has stopped reads as lag rather than as breath.

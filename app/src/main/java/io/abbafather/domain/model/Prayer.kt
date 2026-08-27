@@ -34,6 +34,21 @@ data class Prayer(
 
     fun hasBreathingPauseAfter(lineIndex: Int): Boolean = lineIndex in breathingPauseLineIndices
 
+    /**
+     * Every line of the prayer with a rest between each movement and the next — the whole of what a
+     * session moves through, in the order it is prayed. Held rather than derived on demand because
+     * the session screen draws all of it at once.
+     */
+    val sessionSteps: List<SessionStep> = buildList {
+        movements.forEach { movement ->
+            movement.lines.indices.forEach { position ->
+                add(SessionStep.Line(movement.firstLineIndex + position))
+            }
+            val nextMovement = movements.getOrNull(movement.index + 1)
+            if (nextMovement != null) add(SessionStep.Pause(nextMovement.index))
+        }
+    }
+
     /** The movement a line belongs to — what the session names at a pause and the reader can read about. */
     fun movementOfLine(lineIndex: Int): PrayerMovement =
         movements.last { lineIndex >= it.firstLineIndex }
