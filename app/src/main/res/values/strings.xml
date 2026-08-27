@@ -36,7 +36,7 @@
     <string name="about_prayers_body">Every prayer in the Library is a modern adaptation of a Puritan prayer from The Valley of Vision: A Collection of Puritan Prayers and Devotions, edited by Arthur Bennett and published by The Banner of Truth Trust in 1975.</string>
     <string name="about_prayers_copyright">The compilation, its titles and its arrangement are in copyright to Banner of Truth; the underlying Puritan sources are public domain. Nothing here reproduces the original wording — each prayer was rewritten from the themes of its source. Every prayer carries its own provenance, under “About this prayer” in the reader.</string>
     <string name="about_scripture_label">Scripture</string>
-    <string name="about_scripture_body">Passages are named by reference and translation only. The app never carries the verse text, so you are always sent to your own Bible for the words.</string>
+    <string name="about_scripture_body">The passages a prayer rests on are named by reference and translation only — their text is never carried here, so you are always sent to your own Bible for the words. The line under the greeting on Home is the Authorized Version, which is public domain.</string>
 
     <string name="about_type_label">The type</string>
     <string name="about_type_body">Cormorant Garamond sets the prayers; Work Sans sets everything functional. Both are bundled under the SIL Open Font License, which is carried here in full.</string>

@@ -358,3 +358,10 @@ The design carries state in colour alone — a kept reader line, the selected sh
 are on. `pressableSurface` gained an `onClickLabel`, and those places now carry `selected` or a state
 description, so a reader who is being read the screen is told what the tint says. The arrow on a
 prayer row became decorative: the row itself already announces what tapping it does.
+
+## 2026-08-28 — What "no verse text" actually means
+The About screen said the app never carries verse text. It carries a little: the line under the Home
+greeting is one of forty-odd Authorized Version verses held in `DailyVerses`, and the AV is public
+domain. The claim that matters is about the corpus — the passages a *prayer* rests on are references
+and translation names only, and no prayer file or the built asset holds a word of them. The copy now
+says both, because a promise stated more broadly than it is kept is not a promise.
