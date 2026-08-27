@@ -25,7 +25,7 @@ you love; write your own prayers. No accounts, no network, no notifications.
 | 8 | Catalogue rebuild — the Valley of Vision corpus, schema v2 | `feat/08-catalogue-rebuild` | merged, `task-08` |
 | 9 | Reader metadata — scripture and provenance sheets | `feat/09-reader-metadata` | merged, `task-09` |
 | 10 | Prayer session — movement-aware | `feat/10-prayer-session` | merged, `task-10` |
-| 11 | Saved screen | `feat/11-saved-screen` | built, awaiting approval |
+| 11 | Saved screen | `feat/11-saved-screen` | merged, `task-11` |
 | 12 | My prayers screen | `feat/12-my-prayers-screen` | not started |
 | 13 | Compose prayer screen | `feat/13-compose-prayer-screen` | not started |
 | 14 | Polish and hardening — incl. About and attribution | `feat/14-polish-and-hardening` | not started |
@@ -36,7 +36,7 @@ old tasks 8–12 became 10–14; tasks 8 and 9 are new. See `docs/DECISIONS.md` 
 Each task is built on its own branch, verified, then **stopped for approval**. Only after approval:
 `git switch main && git merge --no-ff <branch> && git tag task-<nn>`.
 
-## Task 11 — built, awaiting approval
+## Task 11 — done and merged
 
 The kept lines, replacing the `Saved` placeholder. The one screen that is entirely the reader's own:
 nothing in it comes from the catalogue except by way of a line someone chose.
