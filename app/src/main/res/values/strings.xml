@@ -88,6 +88,22 @@
         <item quantity="other">%1$d lines you wanted to keep.</item>
     </plurals>
 
+    <string name="my_prayers_title">My prayers</string>
+    <string name="my_prayers_write_new">Write a prayer</string>
+    <string name="my_prayers_untitled">Untitled</string>
+    <string name="my_prayers_last_touched">Last touched %1$s</string>
+    <string name="my_prayers_delete">Delete</string>
+    <string name="my_prayers_delete_question">Delete this prayer?</string>
+    <string name="my_prayers_delete_cancel">Keep it</string>
+    <string name="my_prayers_delete_confirm">Yes, delete</string>
+    <string name="my_prayers_empty_title">Nothing written yet.</string>
+    <string name="my_prayers_empty_hint">Tap the plus and start where you are — or grow a line you kept into a prayer.</string>
+
+    <plurals name="my_prayers_subtitle">
+        <item quantity="one">%1$d prayer in your own words.</item>
+        <item quantity="other">%1$d prayers in your own words.</item>
+    </plurals>
+
     <string name="session_leave">Leave this prayer</string>
     <string name="session_previous">Back a line</string>
     <string name="session_continue">Continue</string>
