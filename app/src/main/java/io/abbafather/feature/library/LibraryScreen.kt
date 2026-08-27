@@ -34,6 +34,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -43,7 +45,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.drop
 import io.abbafather.R
@@ -231,7 +233,9 @@ private fun SearchField(
         decorator = { textField ->
             Row(
                 modifier = Modifier
-                    .height(SearchFieldHeight)
+                    // A minimum, so the field grows with the reader's text size rather than
+                    // clipping what they typed.
+                    .heightIn(min = SearchFieldHeight)
                     .clip(AbbaShapes.Pill)
                     .pressableSurface(shape = AbbaShapes.Pill, containerColor = colors.card, role = null),
                 verticalAlignment = Alignment.CenterVertically,
@@ -313,6 +317,8 @@ private fun LibraryTile(
     SoftCard(
         modifier = modifier
             .fillMaxWidth()
+            // The sage fill is what says "this shelf is the one you are on".
+            .semantics { selected = isSelected }
             .heightIn(min = TileMinHeight),
         shape = AbbaShapes.Tile,
         containerColor = if (isSelected) colors.sage else containerColor,
@@ -400,6 +406,7 @@ private fun PrayerRow(
         shape = AbbaShapes.ListRow,
         contentPadding = PaddingValues(horizontal = 22.dp, vertical = 20.dp),
         onClick = onClick,
+        onClickLabel = stringResource(R.string.library_open_prayer),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
@@ -417,7 +424,8 @@ private fun PrayerRow(
             }
             Icon(
                 imageVector = AbbaIcons.ArrowRight,
-                contentDescription = stringResource(R.string.library_open_prayer),
+                // The row itself says what the tap does; the arrow only points.
+                contentDescription = null,
                 tint = AbbaTheme.colors.mutedSage,
                 modifier = Modifier.size(20.dp),
             )

@@ -1,5 +1,6 @@
 package io.abbafather.testing
 
+import io.abbafather.domain.model.FontLicence
 import io.abbafather.domain.model.PersonalPrayer
 import io.abbafather.domain.model.Prayer
 import io.abbafather.domain.model.PrayerCollection
@@ -12,6 +13,7 @@ import io.abbafather.domain.model.PrayerVoice
 import io.abbafather.domain.model.SavedLine
 import io.abbafather.domain.model.ScriptureReference
 import io.abbafather.domain.model.SessionPacing
+import io.abbafather.domain.repository.LicenceRepository
 import io.abbafather.domain.repository.PersonalPrayerRepository
 import io.abbafather.domain.repository.PrayerRepository
 import io.abbafather.domain.repository.SavedLineRepository
@@ -178,6 +180,34 @@ class FakeSettingsRepository(settings: PrayerSettings = PrayerSettings.Default) 
 
     override suspend fun setKeepsScreenOnDuringSession(keepsScreenOn: Boolean) {
         settings.update { it.copy(keepsScreenOnDuringSession = keepsScreenOn) }
+    }
+}
+
+/** The notices, without going near the assets. Counts reads, because they should happen once. */
+class FakeLicenceRepository(private val licences: List<FontLicence> = DefaultLicences) :
+    LicenceRepository {
+
+    var readCount = 0
+        private set
+
+    override suspend fun getFontLicences(): List<FontLicence> {
+        readCount++
+        return licences
+    }
+
+    companion object {
+        val DefaultLicences = listOf(
+            FontLicence(
+                fontName = "Cormorant Garamond",
+                copyrightLine = "Copyright 2015 the Cormorant Project Authors",
+                text = "Copyright 2015 the Cormorant Project Authors\n\nSIL OPEN FONT LICENSE Version 1.1",
+            ),
+            FontLicence(
+                fontName = "Work Sans",
+                copyrightLine = "Copyright 2019 The Work Sans Project Authors",
+                text = "Copyright 2019 The Work Sans Project Authors\n\nSIL OPEN FONT LICENSE Version 1.1",
+            ),
+        )
     }
 }
 

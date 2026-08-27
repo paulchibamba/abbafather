@@ -327,3 +327,34 @@ the session leaves the screen rather than running on under `WhileSubscribed`'s f
 real device even with `BlurredEdgeTreatment.Unbounded`. It is painted as a `Brush.radialGradient`
 fading from sage to transparent instead — no edge to clip, no API-level behaviour to reason about,
 and the breathing alpha animates in the brush.
+
+## 2026-08-27 — Settings and About are one page, reached from the Home header
+The app has two settings and three obligations. Two settings do not earn a fifth tab, and the
+obligations — where the prayers come from, what Scripture is and is not carried, whose type this is —
+belong beside them rather than behind a second door. So there is one `About` screen, and the way in is
+a tracked-out "ABOUT" on the Home header's brand line: the one place already reserved for the app
+speaking about itself rather than about a prayer.
+
+## 2026-08-27 — The OFL notices are read from the assets, never restated
+`AssetLicenceRepository` reads `assets/licenses/*.txt` and takes each font's copyright line from the
+first line of the notice itself. Nothing in the app restates a licence in its own words, so nothing
+can drift away from what the file actually says. `AssetLicenceRepositoryTest` reads the real assets: a
+font added without its notice fails there rather than shipping.
+
+## 2026-08-27 — Ambient sound is modelled but not offered
+`PrayerSettings.isAmbientSoundEnabled` exists in the domain and nothing plays anything. Offering a
+switch that changes nothing is worse than not offering it, so the About screen shows the two settings
+the session actually obeys — pacing and keep-screen-on — and the third stays where it is until there
+is sound to turn on.
+
+## 2026-08-27 — Pill heights became minimums
+`PillButton` sized itself with `Modifier.height`, which crops the label at a large system font scale.
+Every pill is now `heightIn(min = …)` with its own vertical padding, so at the design's text size the
+buttons are exactly the heights the design gives, and at 200% they grow instead of cutting the words
+off. The Library's search field is a minimum for the same reason.
+
+## 2026-08-27 — A tinted card says nothing out loud
+The design carries state in colour alone — a kept reader line, the selected shelf tile, the tab you
+are on. `pressableSurface` gained an `onClickLabel`, and those places now carry `selected` or a state
+description, so a reader who is being read the screen is told what the tint says. The arrow on a
+prayer row became decorative: the row itself already announces what tapping it does.

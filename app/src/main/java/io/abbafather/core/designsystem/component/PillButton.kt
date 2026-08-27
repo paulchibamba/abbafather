@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
@@ -96,7 +96,9 @@ fun PillButton(
 ) {
     Row(
         modifier = modifier
-            .height(height)
+            // A minimum rather than a height: at a large font scale the label wraps, and a button
+            // that cannot grow would crop the words instead.
+            .heightIn(min = height)
             .defaultMinSize(minWidth = height)
             .clip(AbbaShapes.Pill)
             .pressableSurface(
@@ -105,6 +107,7 @@ fun PillButton(
                 pressedContainerColor = colors.pressedContainerColor,
                 onClick = onClick,
             )
+            .padding(vertical = 12.dp)
             .padding(contentPadding),
         horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,

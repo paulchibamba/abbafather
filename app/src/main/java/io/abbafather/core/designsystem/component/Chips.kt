@@ -6,6 +6,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import io.abbafather.core.designsystem.theme.AbbaShapes
 import io.abbafather.core.designsystem.theme.AbbaTheme
@@ -27,6 +31,8 @@ fun SelectableChip(
         style = AbbaTheme.type.chipLabel,
         color = if (isSelected) colors.oat else colors.inkProse,
         modifier = modifier
+            // The fill is the only thing that says "on", so a screen reader is told separately.
+            .semantics { toggleableState = ToggleableState(isSelected) }
             .clip(AbbaShapes.Pill)
             .pressableSurface(
                 shape = AbbaShapes.Pill,
@@ -34,6 +40,37 @@ fun SelectableChip(
                 pressedContainerColor = if (isSelected) colors.sagePressed else colors.cardPressed,
                 onClick = onToggle,
                 role = Role.Checkbox,
+            )
+            .padding(horizontal = 15.dp, vertical = 11.dp),
+    )
+}
+
+/**
+ * One of a set the reader picks between — the session's pacing. It looks like a [SelectableChip] and
+ * behaves like a radio button: choosing one is what unchooses the others, so tapping the chosen one
+ * again does nothing.
+ */
+@Composable
+fun ChoiceChip(
+    label: String,
+    isSelected: Boolean,
+    onSelect: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = AbbaTheme.colors
+    Text(
+        text = label,
+        style = AbbaTheme.type.chipLabel,
+        color = if (isSelected) colors.oat else colors.inkProse,
+        modifier = modifier
+            .semantics { selected = isSelected }
+            .clip(AbbaShapes.Pill)
+            .pressableSurface(
+                shape = AbbaShapes.Pill,
+                containerColor = if (isSelected) colors.sage else colors.card,
+                pressedContainerColor = if (isSelected) colors.sagePressed else colors.cardPressed,
+                onClick = onSelect,
+                role = Role.RadioButton,
             )
             .padding(horizontal = 15.dp, vertical = 11.dp),
     )

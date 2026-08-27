@@ -23,6 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.abbafather.core.designsystem.component.pressableSurface
@@ -81,6 +83,8 @@ private fun BottomBarTab(
     val contentColor = if (isSelected) AbbaTheme.colors.oat else AbbaTheme.colors.inkSubtle
     Row(
         modifier = Modifier
+            // The fill is what says "you are here"; a screen reader is told in words.
+            .semantics { selected = isSelected }
             .height(PillHeight)
             .defaultMinSize(minWidth = PillHeight)
             .clip(AbbaShapes.Pill)

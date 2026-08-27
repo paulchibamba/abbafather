@@ -27,4 +27,7 @@ sealed interface HomeAction {
 
     /** Go straight into the line-by-line session. */
     data class BeginSession(val prayerId: String) : HomeAction
+
+    /** The settings, the attribution and the licences. */
+    data object OpenAbout : HomeAction
 }

@@ -32,9 +32,11 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.abbafather.R
 import io.abbafather.core.designsystem.component.AbbaIcons
@@ -285,18 +287,22 @@ private fun PrayerLine(
 ) {
     val colors = AbbaTheme.colors
     val isTinted = isKept || isOpen
+    val keptDescription = stringResource(R.string.reader_line_kept)
     Text(
         text = line,
         style = AbbaTheme.type.readerLine,
         color = if (isTinted) colors.inkOnTint else colors.inkProse,
         modifier = modifier
             .fillMaxWidth()
+            // A kept line is tinted; being read the prayer aloud, that tint is nothing at all.
+            .semantics { if (isKept) stateDescription = keptDescription }
             .clip(AbbaShapes.PrayerLine)
             .pressableSurface(
                 shape = AbbaShapes.PrayerLine,
                 containerColor = if (isTinted) colors.sageTint else colors.oat,
                 pressedContainerColor = colors.sageTintPressed,
                 onClick = onClick,
+                onClickLabel = stringResource(R.string.reader_sheet_keep_line),
                 role = Role.Button,
             )
             .padding(horizontal = LineHitAreaInset, vertical = 8.dp),

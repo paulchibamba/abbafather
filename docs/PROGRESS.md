@@ -28,13 +28,64 @@ you love; write your own prayers. No accounts, no network, no notifications.
 | 11 | Saved screen | `feat/11-saved-screen` | merged, `task-11` |
 | 12 | My prayers screen | `feat/12-my-prayers-screen` | merged, `task-12` |
 | 13 | Compose prayer screen | `feat/13-compose-prayer-screen` | merged, `task-13` |
-| 14 | Polish and hardening — incl. About and attribution | `feat/14-polish-and-hardening` | not started |
+| 14 | Polish and hardening — incl. About and attribution | `feat/14-polish-and-hardening` | done in this branch, awaiting approval |
 
 **The board was renumbered on 2026-08-26**, when `docs/prayers/` arrived with the real catalogue. The
 old tasks 8–12 became 10–14; tasks 8 and 9 are new. See `docs/DECISIONS.md` for why.
 
 Each task is built on its own branch, verified, then **stopped for approval**. Only after approval:
 `git switch main && git merge --no-ff <branch> && git tag task-<nn>`.
+
+## Task 14 — done in this branch
+
+The last task: the settings and the notices given a page, and a pass over what the twelve screens
+before it left rough.
+
+- `feature/about/AboutUiState.kt` — `AboutUiState` (the two settings, the licences, the version),
+  `FontLicenceUiState`, and `AboutAction` (`ChoosePacing`, `SetKeepsScreenOn`, `ToggleLicence`,
+  `Back`).
+- `feature/about/AboutViewModel.kt` — the settings flow combined with the notices, which are read
+  from the assets **once**: a flow that emits a single list, so a rotation does not go back to disk
+  for four thousand words that cannot have changed. Which licence is open lives in `SavedStateHandle`.
+- `feature/about/AboutScreen.kt` — what the reader can change first, then what the app owes: the
+  three pacings as choice chips with the chosen one's own sentence under them, the keep-screen-awake
+  card whose whole surface is the switch, where the prayers come from, what Scripture is and is not
+  carried, and the two faces with their notices folded away behind a line of text.
+- `domain/model/FontLicence.kt` + `domain/repository/LicenceRepository.kt`, implemented by
+  `data/repository/AssetLicenceRepository.kt`, which reads `assets/licenses/*.txt` and takes each
+  copyright line out of the notice itself rather than restating it. `core/common/AppInfo.kt` and
+  `di/AppInfoModule.kt` carry the version name so the ViewModel never holds a `Context`.
+- `AbbaRoute.About`, reached from a tracked-out "ABOUT" on the Home header's brand line — the one
+  place already reserved for the app speaking about itself. See `docs/DECISIONS.md`.
+- **Ambient sound is deliberately not offered**: the domain models it and nothing plays anything.
+- The seeding callback moved out of `DatabaseModule` into `data/local/seed/CatalogueSeedingCallback.kt`,
+  so the cold-install path is a thing a test can open a database with rather than an anonymous object
+  inside a Hilt provider.
+- **Dynamic type**: `PillButton` and the Library's search field size themselves with `heightIn`
+  rather than `height`, so at 200% text the labels grow instead of being cropped.
+- **Being read the screen**: `pressableSurface` gained an `onClickLabel`; the bottom bar's tab and
+  the Library's shelf tiles carry `selected`; a kept reader line carries a state description; the
+  chips say whether they are on; and the arrow on a prayer row is decorative now that the row itself
+  says what tapping it does.
+- `hiltViewModel()` now comes from `androidx.hilt.lifecycle.viewmodel.compose` — the module compiles
+  without deprecation warnings.
+- **Tests**: 145 passing (11 new). `AboutViewModelTest` covers the page opening on the settings as
+  they stand with both notices closed, every pacing the domain offers being on it, choosing a pacing
+  and toggling the screen-awake setting writing through and coming back changed, one licence being
+  open at a time, an open licence surviving a rotation, and the notices being read once rather than
+  on every change. `AssetLicenceRepositoryTest` reads the real bundled notices. `ColdInstallSeedingTest`
+  opens an empty database with the app's own callback attached and waits for the catalogue to arrive
+  through the flow the Library reads. `AbbaNavGraphTest` covers About being reachable and popping
+  back to Home.
+- Verified: `:app:assembleDebug` and `:app:testDebugUnitTest` pass, and on a Galaxy Note 10+ holding
+  a real database — "ABOUT" sits on the Home header's brand line without disturbing it; the page
+  opens on the settings as they stand; choosing "Unhurried" changes the sentence under the chips and
+  turning the screen-awake card off changes its pill; both survive a force-stop and a relaunch; a
+  licence opens under its card and closes again; and a session begun afterwards **advanced a line on
+  its own** without a tap, which is the pacing being obeyed. The settings were put back to their
+  defaults afterwards. **Not checked on hardware**: a cold install with no database — that would mean
+  clearing the app's data and this phone holds prayers that were written on it. `ColdInstallSeedingTest`
+  covers that path instead, against a real empty database with the app's own callback attached.
 
 ## Task 13 — done and merged
 
@@ -487,17 +538,12 @@ The UI is still the untouched template "Hello Android" screen. That is expected 
 
 ## Start here for the next task
 
-### Task 14 — `feat/14-polish-and-hardening`
+Every task on the board is built. Task 14 is waiting on approval; once it is given:
 
 ```
-git switch -c feat/14-polish-and-hardening main
+git switch main && git merge --no-ff feat/14-polish-and-hardening && git tag task-14
 ```
 
-The last task: an About screen carrying the attribution the corpus requires and the bundled OFL
-licences, the settings the domain already models (session pacing, keep-screen-on) given somewhere to
-be changed, and a pass over what the twelve screens before it left rough — empty states, content
-descriptions, dynamic type, and the first-run seeding path on a cold install.
-
-**Done when** `:app:assembleDebug` and `:app:testDebugUnitTest` pass, the attribution and licences
-are reachable from the app itself, the reader can change the pacing and the keep-screen-on setting
-and see the session obey them, and a cold install on a device with no database comes up seeded.
+What is deliberately not built, and would be the start of any board after this one: ambient sound
+(the domain models it, nothing plays it), the release build's signing and shrinking, and a sync layer
+— the schema is shaped for one and nothing else assumes it.
