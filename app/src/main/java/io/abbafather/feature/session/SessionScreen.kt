@@ -10,6 +10,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
@@ -46,8 +47,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
@@ -68,6 +74,7 @@ import io.abbafather.core.designsystem.theme.AbbaTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlin.math.abs
+import kotlin.math.sin
 
 /**
  * Binds the ViewModel and performs the two moves that leave the session. Both pop back to whatever
@@ -129,7 +136,7 @@ fun SessionScreen(
             SessionHeader(
                 title = uiState.title,
                 attribution = uiState.attribution,
-                movementProgress = uiState.movementProgress,
+                remainingFraction = uiState.remainingFraction,
                 onLeave = { onAction(SessionAction.Leave) },
             )
 
@@ -173,7 +180,7 @@ private fun SessionSystemBars(keepsScreenOn: Boolean) {
 private fun SessionHeader(
     title: String,
     attribution: String,
-    movementProgress: List<MovementProgress>,
+    remainingFraction: Float,
     onLeave: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -201,52 +208,70 @@ private fun SessionHeader(
             color = colors.oatByline,
         )
         Spacer(Modifier.height(18.dp))
-        MovementTicks(progress = movementProgress)
+        SessionProgress(remainingFraction = remainingFraction)
     }
 }
 
 /**
- * How far through the prayer this is, counted in movements — twenty-nine ticks would be noise. The
- * movement being prayed fills as it goes, so a long one still moves under the reader.
+ * How much of the prayer is still ahead, as one line across the top that empties as it is prayed.
+ *
+ * It runs **down** rather than up because what a reader wants mid-prayer is how much is left, and it
+ * empties **from the left**, so what is still ahead of them stays ahead of them on the page. The
+ * remaining stretch carries a slow wave — the one thing in the header that is alive, at the same
+ * unhurried pace as the glow behind the prayer.
  */
 @Composable
-private fun MovementTicks(
-    progress: List<MovementProgress>,
+private fun SessionProgress(
+    remainingFraction: Float,
     modifier: Modifier = Modifier,
 ) {
     val colors = AbbaTheme.colors
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        progress.forEach { movement ->
-            // A movement already prayed keeps its moss and only stands back from the one being
-            // prayed now; a 3dp bar loses an alpha layer, so the strength is in the colour itself.
-            val filledColor = if (movement.isCurrent) {
-                colors.moss
-            } else {
-                colors.moss.copy(alpha = SpentTickAlpha)
-            }
-            val filled by animateFloatAsState(
-                targetValue = movement.prayedFraction,
-                animationSpec = tween(FadeMillis),
-                label = "movementProgress",
-            )
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(3.dp)
-                    .clip(AbbaShapes.Pill)
-                    .background(colors.oatTick),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .fillMaxWidth(filled)
-                        .background(filledColor),
-                )
+    val remaining by animateFloatAsState(
+        targetValue = remainingFraction.coerceIn(0f, 1f),
+        animationSpec = tween(FadeMillis),
+        label = "sessionProgress",
+    )
+    val wave = rememberInfiniteTransition(label = "wave")
+    val phase by wave.animateFloat(
+        initialValue = 0f,
+        targetValue = TwoPi,
+        animationSpec = infiniteRepeatable(
+            animation = tween(WaveMillis, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "wavePhase",
+    )
+
+    Canvas(modifier = modifier.fillMaxWidth().height(WaveBandHeight)) {
+        val middle = size.height / 2f
+        val stroke = WaveStroke.toPx()
+        val amplitude = WaveAmplitude.toPx()
+        val wavelength = WaveLength.toPx()
+        // What is already prayed is left as a flat line: the wave belongs to what is still to come.
+        drawLine(
+            color = colors.oatTick,
+            start = Offset(0f, middle),
+            end = Offset(size.width, middle),
+            strokeWidth = stroke,
+            cap = StrokeCap.Round,
+        )
+        if (remaining <= 0f) return@Canvas
+
+        val startX = size.width * (1f - remaining)
+        val crest = { x: Float -> middle + amplitude * sin(phase + x / wavelength * TwoPi) }
+        val path = Path().apply {
+            moveTo(startX, crest(startX))
+            var x = startX
+            while (x < size.width) {
+                x = (x + WaveStep).coerceAtMost(size.width)
+                lineTo(x, crest(x))
             }
         }
+        drawPath(
+            path = path,
+            color = colors.moss,
+            style = Stroke(width = stroke, cap = StrokeCap.Round, join = StrokeJoin.Round),
+        )
     }
 }
 
@@ -466,6 +491,17 @@ private const val FadeMillis = 700
 
 private val LineGap = 18.dp
 
+/** The progress wave: slow enough to be alive without being something to watch. */
+private const val WaveMillis = 4_000
+private const val TwoPi = (2 * Math.PI).toFloat()
+private val WaveBandHeight = 10.dp
+private val WaveStroke = 3.dp
+private val WaveAmplitude = 2.5.dp
+private val WaveLength = 16.dp
+
+/** Pixels between points on the drawn wave — small enough that the line reads as a curve. */
+private const val WaveStep = 2f
+
 /** How far the column fades into the ground at each end of the stage. */
 private val EdgeFade = 52.dp
 
@@ -473,9 +509,6 @@ private val EdgeFade = 52.dp
 private const val GlowMillis = 9_000
 private val GlowDiameter = 460.dp
 private val GlowRise = (-60).dp
-
-/** Movements already prayed keep their moss, but stand back from the one being prayed now. */
-private const val SpentTickAlpha = 0.55f
 
 private val previewLines = listOf(
     "Father, you are endlessly generous.",
@@ -494,12 +527,7 @@ private fun SessionScreenPreview() {
                 attribution = "The Valley of Vision, adapted",
                 lines = previewLines,
                 activeLineIndex = 1,
-                movementProgress = listOf(
-                    MovementProgress(prayedFraction = 1f, isCurrent = false),
-                    MovementProgress(prayedFraction = 0.5f, isCurrent = true),
-                    MovementProgress(prayedFraction = 0f, isCurrent = false),
-                    MovementProgress(prayedFraction = 0f, isCurrent = false),
-                ),
+                remainingFraction = 0.66f,
                 canGoBack = true,
                 isLoaded = true,
             ),
@@ -519,9 +547,7 @@ private fun SessionEndPreview() {
                 attribution = "The Valley of Vision, adapted",
                 lines = previewLines,
                 activeLineIndex = previewLines.lastIndex,
-                movementProgress = List(4) {
-                    MovementProgress(prayedFraction = 1f, isCurrent = it == 3)
-                },
+                remainingFraction = 0f,
                 canGoBack = true,
                 isAtEnd = true,
                 isLoaded = true,

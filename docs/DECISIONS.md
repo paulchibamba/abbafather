@@ -398,6 +398,8 @@ the position is a line index into `Prayer.lines` again — the same address a ke
 One fewer concept for the same behaviour.
 
 ## 2026-08-28 — The ticks fill rather than switch
+**Superseded 2026-08-28 — see "The progress bar empties".**
+
 Progress is still counted in movements — twenty-nine ticks would be noise — but a tick used to be
 one of three states, so a nine-line movement sat perfectly still for nine taps. Now the movement
 being prayed fills line by line while the ones behind it stay full at `moss @ .55`. The rests used
@@ -412,3 +414,24 @@ a column that never changes, so the rise is the scroll itself and the fade is a 
 `animateColorAsState` on distance from the active step. Shorter than the design's second because
 nothing is being replaced: the scroll settles in about half that, and a fade still running after the
 movement has stopped reads as lag rather than as breath.
+
+## 2026-08-28 — The progress bar empties, from the left
+Supersedes "The ticks fill rather than switch". One unbroken line across the header instead of one
+tick per movement, and it runs **down** rather than up: whole at the first line, empty at the last.
+It empties from the **left**, so what is still ahead of the reader stays ahead of them on the page,
+and the flat stretch behind is what has been prayed.
+
+Counting movements was a way of saying where in the prayer's structure the reader stood, and that
+mattered while the session stopped at every movement boundary. It no longer stops, so the structure
+is not something the reader is being moved through any more — it belongs to the reader screen, which
+shows the headings. What is left to say is simply how much prayer is still ahead, and an emptying
+bar answers that without being read.
+
+`SessionUiState` carries one `remainingFraction` in place of a list of per-movement progress, and
+`PrayerMovement` is no longer consulted by the session at all.
+
+The remaining stretch carries a slow wave, in the manner of Material 3's wavy progress indicator.
+**It is drawn rather than imported**: `LinearWavyProgressIndicator` ships in `material3` 1.5.0-alpha,
+and the Compose BOM here pins 1.4.0. Nothing else in this app is Material-shaped — the buttons,
+cards and chips are all its own — so taking an alpha dependency to borrow one component would have
+been the only unstable thing in the build, for a sine wave and a flat line on a `Canvas`.

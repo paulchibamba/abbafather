@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.abbafather.domain.model.Prayer
-import io.abbafather.domain.model.PrayerMovement
 import io.abbafather.domain.model.PrayerSettings
 import io.abbafather.domain.repository.PrayerRepository
 import io.abbafather.domain.repository.SettingsRepository
@@ -82,7 +81,7 @@ class SessionViewModel @Inject constructor(
             attribution = attribution,
             lines = lines,
             activeLineIndex = activeLineIndex,
-            movementProgress = movements.map { it.progressAt(activeLineIndex) },
+            remainingFraction = remainingFractionAt(activeLineIndex),
             canGoBack = activeLineIndex > 0,
             isAtEnd = isAtEnd,
             // Nothing to move on to at the end, so the last line never times out from under "Amen".
@@ -94,17 +93,11 @@ class SessionViewModel @Inject constructor(
     }
 
     /**
-     * A movement behind the reader is prayed whole, one ahead is untouched, and the one being
-     * prayed fills line by line — so a movement of nine lines does not sit still for nine taps.
+     * How much of the prayer is still ahead: a whole one at the first line, none of it at the last.
+     * A prayer of a single line has nothing ahead of it at all.
      */
-    private fun PrayerMovement.progressAt(activeLineIndex: Int) = MovementProgress(
-        prayedFraction = when {
-            activeLineIndex > lineIndices.last -> 1f
-            activeLineIndex < firstLineIndex -> 0f
-            else -> (activeLineIndex - firstLineIndex + 1).toFloat() / lines.size
-        },
-        isCurrent = activeLineIndex in lineIndices,
-    )
+    private fun Prayer.remainingFractionAt(activeLineIndex: Int): Float =
+        if (lines.size <= 1) 0f else 1f - activeLineIndex.toFloat() / lines.lastIndex
 
     private companion object {
         const val PrayerIdKey = "prayerId"

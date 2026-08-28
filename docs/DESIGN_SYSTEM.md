@@ -20,7 +20,7 @@ phone stops looking like an app.*
 | `sagePressed` | `#3D4C39` | primary button press |
 | `sageTint` | `#DFE4D5` | home header field, tag chips, selected reader line, "Pray this" |
 | `mutedSage` | `#7C8F72` | small uppercase eyebrow labels |
-| `moss` | `#B9C9AC` | session progress ticks |
+| `moss` | `#B9C9AC` | the session's progress bar |
 | `ink` | `#2B2A26` | primary text |
 | `inkOnTint` | `#2B3327` | text on `sageTint` fields |
 | `deepForest` | `#232A22` | prayer session background |
