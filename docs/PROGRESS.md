@@ -62,9 +62,12 @@ being prayed held on the centre of the screen, and no rests between movements.
   the position is a line index into `Prayer.lines` again, so `SessionStep`, `Prayer.sessionSteps`
   and the `session_breathe` / `session_movement_position` strings are deleted, and
   `SavedStateHandle` carries `sessionLineIndex`.
-- **The ticks fill rather than switch.** Progress is still counted in movements, but the one being
-  prayed fills line by line, so a nine-line movement no longer sits still for nine taps. With the
-  rests gone, this is what says a turn of the praying has been finished.
+- **The progress bar became one line that goes still.** No bar and no track: one moss line across the
+  top, waving where the prayer is still to come and lying straight and still behind the reader, so
+  the living part shortens from the left until at "Amen" the whole line is still. The wave swells out
+  of the still stretch over one wavelength rather than starting at a step. Drawn on a `Canvas`, not
+  imported — the Material 3 wavy indicator ships in a `material3` 1.5.0 alpha and nothing else in
+  this app is Material-shaped. See `docs/DECISIONS.md`.
 - **Free scrolling stays on** and the next advance re-centres. No snap-back timer.
 - **The keys that would have broken it**: the pacing dwell timer and the scroll both keyed on
   `(movementLines, breathingPause)`, and neither changes per advance now. Both key on

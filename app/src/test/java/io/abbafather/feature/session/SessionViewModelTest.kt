@@ -51,6 +51,7 @@ class SessionViewModelTest {
     private fun viewModel(
         savedStateHandle: SavedStateHandle = SavedStateHandle(mapOf("prayerId" to prayer.id)),
         settingsRepository: FakeSettingsRepository = FakeSettingsRepository(),
+        prayerRepository: FakePrayerRepository = this.prayerRepository,
     ) = SessionViewModel(
         savedStateHandle = savedStateHandle,
         prayerRepository = prayerRepository,
@@ -77,8 +78,6 @@ class SessionViewModelTest {
 
     private val SessionUiState.activeLine: String get() = lines[activeLineIndex]
 
-    private val SessionUiState.prayedFractions: List<Float>
-        get() = movementProgress.map(MovementProgress::prayedFraction)
 
     @Test
     fun `the session opens on the first line, with the whole prayer under it`() = runTest {
@@ -136,26 +135,38 @@ class SessionViewModelTest {
         }
     }
 
-    /** Three movements of two, one and two lines, so a half-prayed movement is a real fraction. */
+    /** Five lines, so each one takes a clean quarter off what is left ahead. */
     @Test
-    fun `a movement fills as it is prayed, and stays full once it is behind`() = runTest {
+    fun `the bar starts whole and empties as the prayer is prayed`() = runTest {
         val viewModel = viewModel()
 
         viewModel.loadedStates.test {
             skipItems(1)
-            val opening = viewModel.settled()
-            assertEquals(listOf(0.5f, 0f, 0f), opening.prayedFractions)
-            assertEquals(listOf(true, false, false), opening.movementProgress.map { it.isCurrent })
+            assertEquals(1f, viewModel.settled().remainingFraction, Tolerance)
 
-            val secondMovement = viewModel.advance(2)
+            assertEquals(0.75f, viewModel.advance(1).remainingFraction, Tolerance)
+            assertEquals(0.5f, viewModel.advance(1).remainingFraction, Tolerance)
 
-            assertEquals(listOf(1f, 1f, 0f), secondMovement.prayedFractions)
-            assertEquals(
-                listOf(false, true, false),
-                secondMovement.movementProgress.map { it.isCurrent },
-            )
+            // The last line is the end of the prayer, so there is nothing left ahead of it.
+            assertEquals(0f, viewModel.advance(2).remainingFraction, Tolerance)
             cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    @Test
+    fun `a prayer of a single line has nothing ahead of it`() = runTest {
+        val onlyLine = testPrayer(id = "vov-013-the-all-good", lines = listOf("Hold me fast."))
+
+        viewModel(
+            savedStateHandle = SavedStateHandle(mapOf("prayerId" to onlyLine.id)),
+            prayerRepository = FakePrayerRepository(listOf(onlyLine)),
+        ).loadedStates.test {
+                val uiState = awaitItem()
+
+                assertEquals(0f, uiState.remainingFraction, Tolerance)
+                assertTrue(uiState.isAtEnd)
+                cancelAndIgnoreRemainingEvents()
+            }
     }
 
     @Test
@@ -271,5 +282,10 @@ class SessionViewModelTest {
             assertFalse(awaitItem().keepsScreenOn)
             cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    private companion object {
+        /** Fractions are compared as floats; a quarter is never exactly a quarter. */
+        const val Tolerance = 0.0001f
     }
 }
