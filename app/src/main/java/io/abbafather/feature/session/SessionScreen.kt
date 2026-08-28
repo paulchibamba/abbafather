@@ -213,19 +213,20 @@ private fun SessionHeader(
 }
 
 /**
- * How much of the prayer is still ahead, as one line across the top that empties as it is prayed.
+ * How much of the prayer is still ahead, as **one line** across the top of the session.
  *
- * It runs **down** rather than up because what a reader wants mid-prayer is how much is left, and it
- * empties **from the left**, so what is still ahead of them stays ahead of them on the page. The
- * remaining stretch carries a slow wave — the one thing in the header that is alive, at the same
- * unhurried pace as the glow behind the prayer.
+ * The line is the whole prayer. What is still to come waves, slowly and on its own; what has been
+ * prayed lies straight and still behind it. So the reader does not read a bar — they watch the
+ * living part of the line shorten as they pray, from the left, until at "Amen" the whole line is
+ * still. The wave grows out of the straight stretch over one wavelength rather than starting at a
+ * step, because it is one line changing character rather than two lines meeting.
  */
 @Composable
 private fun SessionProgress(
     remainingFraction: Float,
     modifier: Modifier = Modifier,
 ) {
-    val colors = AbbaTheme.colors
+    val moss = AbbaTheme.colors.moss
     val remaining by animateFloatAsState(
         targetValue = remainingFraction.coerceIn(0f, 1f),
         animationSpec = tween(FadeMillis),
@@ -244,37 +245,29 @@ private fun SessionProgress(
 
     Canvas(modifier = modifier.fillMaxWidth().height(WaveBandHeight)) {
         val middle = size.height / 2f
-        val stroke = WaveStroke.toPx()
         val amplitude = WaveAmplitude.toPx()
         val wavelength = WaveLength.toPx()
-        val startX = size.width * (1f - remaining)
+        val stillEnd = size.width * (1f - remaining)
 
-        // One line, not two: what is prayed lies flat, and it becomes the wave where the reader is.
-        val flatEnd = startX - WaveGap.toPx()
-        if (flatEnd > 0f) {
-            drawLine(
-                color = colors.oatTick,
-                start = Offset(0f, middle),
-                end = Offset(flatEnd, middle),
-                strokeWidth = stroke,
-                cap = StrokeCap.Round,
-            )
-        }
-        if (remaining <= 0f) return@Canvas
-
-        val crest = { x: Float -> middle + amplitude * sin(phase + x / wavelength * TwoPi) }
-        val path = Path().apply {
-            moveTo(startX, crest(startX))
-            var x = startX
+        val line = Path().apply {
+            moveTo(0f, middle)
+            lineTo(stillEnd, middle)
+            var x = stillEnd
             while (x < size.width) {
                 x = (x + WaveStep).coerceAtMost(size.width)
-                lineTo(x, crest(x))
+                // The swell in, so the wave rises out of the still line instead of stepping off it.
+                val swell = ((x - stillEnd) / wavelength).coerceAtMost(1f)
+                lineTo(x, middle + amplitude * swell * sin(phase + x / wavelength * TwoPi))
             }
         }
         drawPath(
-            path = path,
-            color = colors.moss,
-            style = Stroke(width = stroke, cap = StrokeCap.Round, join = StrokeJoin.Round),
+            path = line,
+            color = moss,
+            style = Stroke(
+                width = WaveStroke.toPx(),
+                cap = StrokeCap.Round,
+                join = StrokeJoin.Round,
+            ),
         )
     }
 }
@@ -505,9 +498,6 @@ private val WaveLength = 16.dp
 
 /** Pixels between points on the drawn wave — small enough that the line reads as a curve. */
 private const val WaveStep = 2f
-
-/** Air between what has been prayed and what is still ahead, so the two are one line with a seam. */
-private val WaveGap = 6.dp
 
 /** How far the column fades into the ground at each end of the stage. */
 private val EdgeFade = 52.dp
