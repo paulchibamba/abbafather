@@ -247,17 +247,21 @@ private fun SessionProgress(
         val stroke = WaveStroke.toPx()
         val amplitude = WaveAmplitude.toPx()
         val wavelength = WaveLength.toPx()
-        // What is already prayed is left as a flat line: the wave belongs to what is still to come.
-        drawLine(
-            color = colors.oatTick,
-            start = Offset(0f, middle),
-            end = Offset(size.width, middle),
-            strokeWidth = stroke,
-            cap = StrokeCap.Round,
-        )
+        val startX = size.width * (1f - remaining)
+
+        // One line, not two: what is prayed lies flat, and it becomes the wave where the reader is.
+        val flatEnd = startX - WaveGap.toPx()
+        if (flatEnd > 0f) {
+            drawLine(
+                color = colors.oatTick,
+                start = Offset(0f, middle),
+                end = Offset(flatEnd, middle),
+                strokeWidth = stroke,
+                cap = StrokeCap.Round,
+            )
+        }
         if (remaining <= 0f) return@Canvas
 
-        val startX = size.width * (1f - remaining)
         val crest = { x: Float -> middle + amplitude * sin(phase + x / wavelength * TwoPi) }
         val path = Path().apply {
             moveTo(startX, crest(startX))
@@ -501,6 +505,9 @@ private val WaveLength = 16.dp
 
 /** Pixels between points on the drawn wave — small enough that the line reads as a curve. */
 private const val WaveStep = 2f
+
+/** Air between what has been prayed and what is still ahead, so the two are one line with a seam. */
+private val WaveGap = 6.dp
 
 /** How far the column fades into the ground at each end of the stage. */
 private val EdgeFade = 52.dp
