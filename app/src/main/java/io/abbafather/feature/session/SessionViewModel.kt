@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.abbafather.domain.model.Prayer
+import io.abbafather.domain.model.PrayerMovement
 import io.abbafather.domain.model.PrayerSettings
 import io.abbafather.domain.repository.PrayerRepository
 import io.abbafather.domain.repository.SettingsRepository
@@ -15,12 +16,13 @@ import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 /**
- * Walks one prayer a line at a time, resting at every movement boundary.
+ * Walks one prayer a line at a time, straight through from the first to the last.
  *
- * The session's position is a **step** index rather than a line index, because a breathing pause
- * is a place the session can be in: a rotation taken at a pause has to come back to the pause
- * rather than to the line before it. See `docs/DECISIONS.md`. It lives in [SavedStateHandle], so
- * the reader comes back to the line they were praying.
+ * The position is a line index into [Prayer.lines] — the same address a kept line holds — and it
+ * lives in [SavedStateHandle], so the reader comes back to the line they were praying.
+ *
+ * The whole prayer is handed to the screen every time and only the index moves, so the list is
+ * equal across an advance and nothing that watches it has to be rebuilt.
  */
 @HiltViewModel
 class SessionViewModel @Inject constructor(
@@ -37,11 +39,11 @@ class SessionViewModel @Inject constructor(
         "SessionViewModel was built without a $PrayerIdKey argument"
     }
 
-    private val stepIndex: StateFlow<Int> = savedStateHandle.getStateFlow(StepIndexKey, 0)
+    private val lineIndex: StateFlow<Int> = savedStateHandle.getStateFlow(LineIndexKey, 0)
 
     /**
      * Held as state rather than collected twice: moving through the session needs to know how many
-     * steps there are, and that is the prayer's own shape.
+     * lines there are, and that is the prayer's own shape.
      */
     private val prayer: StateFlow<Prayer?> = prayerRepository.observePrayer(prayerId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
@@ -49,9 +51,9 @@ class SessionViewModel @Inject constructor(
     val uiState: StateFlow<SessionUiState> = combine(
         prayer,
         settingsRepository.observeSettings(),
-        stepIndex,
-    ) { prayer, settings, stepIndex ->
-        prayer?.toUiState(settings, stepIndex) ?: SessionUiState()
+        lineIndex,
+    ) { prayer, settings, lineIndex ->
+        prayer?.toUiState(settings, lineIndex) ?: SessionUiState()
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -67,34 +69,23 @@ class SessionViewModel @Inject constructor(
         }
     }
 
-    /**
-     * The steps are rebuilt rather than held, because they are a pure function of the prayer and a
-     * held copy could only ever disagree with it.
-     */
-    private fun moveBy(steps: Int) {
-        val lastStep = prayer.value?.sessionSteps()?.lastIndex ?: return
-        savedStateHandle[StepIndexKey] = (stepIndex.value + steps).coerceIn(0, lastStep)
+    private fun moveBy(lines: Int) {
+        val lastLine = prayer.value?.lines?.lastIndex ?: return
+        savedStateHandle[LineIndexKey] = (lineIndex.value + lines).coerceIn(0, lastLine)
     }
 
-    private fun Prayer.toUiState(settings: PrayerSettings, stepIndex: Int): SessionUiState {
-        val steps = sessionSteps()
-        val step = steps.getOrNull(stepIndex) ?: steps.first()
-        val isAtEnd = stepIndex >= steps.lastIndex
+    private fun Prayer.toUiState(settings: PrayerSettings, lineIndex: Int): SessionUiState {
+        val activeLineIndex = lineIndex.coerceIn(0, lines.lastIndex)
+        val isAtEnd = activeLineIndex >= lines.lastIndex
         return SessionUiState(
             title = title,
             attribution = attribution,
-            movementLines = (step as? SessionStep.Line)?.let { linesUpTo(it) }.orEmpty(),
-            breathingPause = (step as? SessionStep.Pause)?.let { pause ->
-                BreathingPauseUiState(
-                    nextMovementHeading = movements[pause.nextMovementIndex].heading,
-                    nextMovementNumber = pause.nextMovementIndex + 1,
-                    movementCount = movements.size,
-                )
-            },
-            movementTicks = movementTicks(step),
-            canGoBack = stepIndex > 0,
+            lines = lines,
+            activeLineIndex = activeLineIndex,
+            movementProgress = movements.map { it.progressAt(activeLineIndex) },
+            canGoBack = activeLineIndex > 0,
             isAtEnd = isAtEnd,
-            // Nothing to move on to at the end, so the last step never times out from under "Amen".
+            // Nothing to move on to at the end, so the last line never times out from under "Amen".
             autoAdvanceAfterMillis = settings.sessionPacing.lineDwellMillis
                 .takeIf { it > 0L && !isAtEnd },
             keepsScreenOn = settings.keepsScreenOnDuringSession,
@@ -103,54 +94,20 @@ class SessionViewModel @Inject constructor(
     }
 
     /**
-     * The current movement from its first line down to the one being prayed. A movement is the unit
-     * the screen holds: the pause clears it, and the next movement begins on an empty ground.
+     * A movement behind the reader is prayed whole, one ahead is untouched, and the one being
+     * prayed fills line by line — so a movement of nine lines does not sit still for nine taps.
      */
-    private fun Prayer.linesUpTo(step: SessionStep.Line): List<SessionLine> {
-        val movement = movementOfLine(step.lineIndex)
-        return (movement.firstLineIndex..step.lineIndex).map { lineIndex ->
-            SessionLine(text = lines[lineIndex], isCurrent = lineIndex == step.lineIndex)
-        }
-    }
-
-    private fun Prayer.movementTicks(step: SessionStep): List<MovementTick> {
-        val currentMovementIndex = when (step) {
-            is SessionStep.Line -> movementOfLine(step.lineIndex).index
-            // A pause belongs to the movement it opens onto, so the tick moves with the reader.
-            is SessionStep.Pause -> step.nextMovementIndex
-        }
-        return movements.map { movement ->
-            when {
-                movement.index < currentMovementIndex -> MovementTick.Spent
-                movement.index == currentMovementIndex -> MovementTick.Current
-                else -> MovementTick.ToCome
-            }
-        }
-    }
+    private fun PrayerMovement.progressAt(activeLineIndex: Int) = MovementProgress(
+        prayedFraction = when {
+            activeLineIndex > lineIndices.last -> 1f
+            activeLineIndex < firstLineIndex -> 0f
+            else -> (activeLineIndex - firstLineIndex + 1).toFloat() / lines.size
+        },
+        isCurrent = activeLineIndex in lineIndices,
+    )
 
     private companion object {
         const val PrayerIdKey = "prayerId"
-        const val StepIndexKey = "sessionStepIndex"
-    }
-}
-
-/**
- * Every line of the prayer, with a rest between each movement and the next. Derived from the prayer
- * on demand: it is a pure function of `movements`, so there is nothing to keep in step.
- */
-private sealed interface SessionStep {
-
-    data class Line(val lineIndex: Int) : SessionStep
-
-    data class Pause(val nextMovementIndex: Int) : SessionStep
-}
-
-private fun Prayer.sessionSteps(): List<SessionStep> = buildList {
-    movements.forEach { movement ->
-        movement.lines.indices.forEach { position ->
-            add(SessionStep.Line(movement.firstLineIndex + position))
-        }
-        val nextMovement = movements.getOrNull(movement.index + 1)
-        if (nextMovement != null) add(SessionStep.Pause(nextMovement.index))
+        const val LineIndexKey = "sessionLineIndex"
     }
 }

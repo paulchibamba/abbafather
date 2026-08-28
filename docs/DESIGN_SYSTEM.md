@@ -20,7 +20,7 @@ phone stops looking like an app.*
 | `sagePressed` | `#3D4C39` | primary button press |
 | `sageTint` | `#DFE4D5` | home header field, tag chips, selected reader line, "Pray this" |
 | `mutedSage` | `#7C8F72` | small uppercase eyebrow labels |
-| `moss` | `#B9C9AC` | session progress ticks, "Breathe" line |
+| `moss` | `#B9C9AC` | session progress ticks |
 | `ink` | `#2B2A26` | primary text |
 | `inkOnTint` | `#2B3327` | text on `sageTint` fields |
 | `deepForest` | `#232A22` | prayer session background |
@@ -28,7 +28,8 @@ phone stops looking like an app.*
 Opacity conventions on `ink`: `.8` body serif, `.75` secondary, `.72` meta/labels, `.7` prose,
 `.6` subtitles, `.35` placeholders, `.2` sheet handle.
 On `oat` inside the session: `.85` ambient button, `.6` reader byline, `.55` secondary buttons,
-`.45` hint, `.38` already-read lines, `.22` unfilled ticks, `.12` translucent button fills.
+`.45` hint, `.38` a line either side of the one being prayed, `.22` unfilled ticks and two steps
+away, `.12` translucent button fills and anything further off.
 
 ## Type
 
@@ -42,7 +43,7 @@ Two families, bundled as OFL TTFs (not downloadable fonts, so rendering is ident
 | Home greeting | serif | 42 / 1.1 / 300 | letter-spacing −.01em |
 | Screen title | serif | 38 / 1.1 / 300 | Library, My prayers, Saved |
 | Reader title | serif | 36 / 1.12 / 300 | |
-| Session line | serif | 30 / 1.42 / 300 | current line `oat`, earlier lines `oat @ .38` |
+| Session line | serif | 30 / 1.42 / 300 | by distance from the line being prayed: `oat`, then .38, .22, .12 |
 | Compose title field | serif | 32 / 1.2 / 400 | borderless |
 | Suggested card title | serif | 27 / 1.2 / 400 | |
 | Saved line | serif | 25 / 1.45 / 300 | |
@@ -87,7 +88,9 @@ Screen padding: 44 top / 24 sides / 30 bottom for list screens; 26 all round for
 
 ## Motion
 
-- `fadeup` — 14px rise + fade, ~1s ease, on each newly revealed session line; .35s on the bottom sheet.
+- `fadeup` — 14px rise + fade, ~1s ease; .35s on the bottom sheet. **In the session the rise is the
+  scroll**: the whole prayer is one column, the step being prayed is held on the centre of the
+  screen, and only the colour animates — 700ms on distance from it. See `docs/DECISIONS.md`.
 - `glow` — the session's blurred sage orb breathes between .5/1.0 and .85/1.06 scale over 9s.
 
 ## Components to build (`core/designsystem/component/`)

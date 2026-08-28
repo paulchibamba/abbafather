@@ -147,8 +147,7 @@
     <string name="session_previous">Back a line</string>
     <string name="session_continue">Continue</string>
     <string name="session_amen">Amen</string>
-    <string name="session_breathe">Breathe</string>
-    <string name="session_movement_position">Movement %1$d of %2$d</string>
+    <string name="session_being_prayed">Being prayed now</string>
 
     <plurals name="library_matching_prayers">
         <item quantity="one">%1$d prayer</item>

@@ -75,108 +75,101 @@ class SessionViewModelTest {
         return settled()
     }
 
+    private val SessionUiState.activeLine: String get() = lines[activeLineIndex]
+
+    private val SessionUiState.prayedFractions: List<Float>
+        get() = movementProgress.map(MovementProgress::prayedFraction)
+
     @Test
-    fun `the session opens on the first line of the first movement`() = runTest {
+    fun `the session opens on the first line, with the whole prayer under it`() = runTest {
         viewModel().loadedStates.test {
             val uiState = awaitItem()
 
             assertEquals(prayer.title, uiState.title)
             assertEquals(prayer.attribution, uiState.attribution)
-            assertEquals(listOf(prayer.lines[0]), uiState.movementLines.map { it.text })
-            assertTrue(uiState.movementLines.single().isCurrent)
-            assertNull(uiState.breathingPause)
+            assertEquals(prayer.lines, uiState.lines)
+            assertEquals(0, uiState.activeLineIndex)
             assertFalse(uiState.canGoBack)
             assertFalse(uiState.isAtEnd)
             cancelAndIgnoreRemainingEvents()
         }
     }
 
+    /**
+     * The column is the prayer, and the prayer does not change while it is being prayed. Put
+     * activeness on the step instead and every advance builds a different list — which is what this
+     * asserts against, because everything the screen keys on would then thrash.
+     */
     @Test
-    fun `earlier lines of the movement stay on screen behind the one being prayed`() = runTest {
+    fun `advancing moves the active line and leaves the column alone`() = runTest {
         val viewModel = viewModel()
 
         viewModel.loadedStates.test {
-            skipItems(1)
+            val opening = awaitItem()
 
-            val uiState = viewModel.advance(1)
+            val advanced = viewModel.advance(1)
 
-            assertEquals(prayer.lines.take(2), uiState.movementLines.map { it.text })
-            assertEquals(listOf(false, true), uiState.movementLines.map { it.isCurrent })
+            assertEquals(opening.lines, advanced.lines)
+            assertEquals(1, advanced.activeLineIndex)
+            assertEquals(prayer.lines[1], advanced.activeLine)
             cancelAndIgnoreRemainingEvents()
         }
     }
 
+    /**
+     * The rests between movements belong to the reader screen. A session prays the whole thing
+     * through, so advancing off the end of a movement lands on the next movement's first line.
+     */
     @Test
-    fun `the session rests at every movement boundary and names what comes next`() = runTest {
+    fun `the prayer runs straight through its movements without resting`() = runTest {
         val viewModel = viewModel()
 
         viewModel.loadedStates.test {
             skipItems(1)
 
-            // Two lines of the first movement, then the rest before the second.
-            val pause = viewModel.advance(2)
+            // The first movement's two lines, then straight into the second movement's only one.
+            val uiState = viewModel.advance(2)
 
-            assertEquals(prayer.movements[1].heading, pause.breathingPause?.nextMovementHeading)
-            assertEquals(2, pause.breathingPause?.nextMovementNumber)
-            assertEquals(3, pause.breathingPause?.movementCount)
-            // A pause is instead of a line, never alongside one.
-            assertTrue(pause.movementLines.isEmpty())
+            assertEquals(prayer.movements[1].lines.single(), uiState.activeLine)
+            assertEquals(prayer.movements[1].firstLineIndex, uiState.activeLineIndex)
             cancelAndIgnoreRemainingEvents()
         }
     }
 
+    /** Three movements of two, one and two lines, so a half-prayed movement is a real fraction. */
     @Test
-    fun `a movement begins on an empty ground rather than under the one before it`() = runTest {
+    fun `a movement fills as it is prayed, and stays full once it is behind`() = runTest {
         val viewModel = viewModel()
 
         viewModel.loadedStates.test {
             skipItems(1)
+            val opening = viewModel.settled()
+            assertEquals(listOf(0.5f, 0f, 0f), opening.prayedFractions)
+            assertEquals(listOf(true, false, false), opening.movementProgress.map { it.isCurrent })
 
-            val uiState = viewModel.advance(3)
+            val secondMovement = viewModel.advance(2)
 
+            assertEquals(listOf(1f, 1f, 0f), secondMovement.prayedFractions)
             assertEquals(
-                listOf(prayer.movements[1].lines.single()),
-                uiState.movementLines.map { it.text },
-            )
-            assertNull(uiState.breathingPause)
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun `the ticks count movements, and a pause belongs to the movement it opens onto`() = runTest {
-        val viewModel = viewModel()
-
-        viewModel.loadedStates.test {
-            skipItems(1)
-            assertEquals(
-                listOf(MovementTick.Current, MovementTick.ToCome, MovementTick.ToCome),
-                viewModel.settled().movementTicks,
-            )
-
-            val pause = viewModel.advance(2)
-
-            assertEquals(
-                listOf(MovementTick.Spent, MovementTick.Current, MovementTick.ToCome),
-                pause.movementTicks,
+                listOf(false, true, false),
+                secondMovement.movementProgress.map { it.isCurrent },
             )
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `the last line is the end, and there is no pause after the last movement`() = runTest {
+    fun `the last line is the end of the prayer`() = runTest {
         val viewModel = viewModel()
 
         viewModel.loadedStates.test {
             skipItems(1)
 
-            // Five lines and two pauses: six moves reach the last line.
-            val end = viewModel.advance(6)
+            // Five lines: four moves reach the last one.
+            val end = viewModel.advance(4)
 
-            assertEquals(prayer.lines.last(), end.movementLines.last().text)
+            assertEquals(prayer.lines.last(), end.activeLine)
             assertTrue(end.isAtEnd)
-            assertNull(end.breathingPause)
 
             // Nowhere further to go, however hard the reader taps.
             assertEquals(end, viewModel.advance(3))
@@ -195,11 +188,13 @@ class SessionViewModelTest {
             viewModel.onAction(SessionAction.GoBack)
 
             val uiState = viewModel.settled()
-            assertEquals(prayer.lines.take(2), uiState.movementLines.map { it.text })
+            assertEquals(1, uiState.activeLineIndex)
+            assertEquals(prayer.lines[1], uiState.activeLine)
 
             repeat(5) { viewModel.onAction(SessionAction.GoBack) }
             val beginning = viewModel.settled()
-            assertEquals(listOf(prayer.lines[0]), beginning.movementLines.map { it.text })
+            assertEquals(0, beginning.activeLineIndex)
+            assertEquals(prayer.lines[0], beginning.activeLine)
             assertFalse(beginning.canGoBack)
             cancelAndIgnoreRemainingEvents()
         }
@@ -207,27 +202,7 @@ class SessionViewModelTest {
 
     /** A rotation is a new ViewModel over the same handle: the session comes back to itself. */
     @Test
-    fun `the place in the prayer survives a rotation, a pause included`() = runTest {
-        val savedStateHandle = SavedStateHandle(mapOf("prayerId" to prayer.id))
-        val before = viewModel(savedStateHandle)
-
-        before.loadedStates.test {
-            skipItems(1)
-            before.advance(3)
-            cancelAndIgnoreRemainingEvents()
-        }
-
-        viewModel(savedStateHandle).loadedStates.test {
-            assertEquals(
-                listOf(prayer.movements[1].lines.single()),
-                awaitItem().movementLines.map { it.text },
-            )
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun `a rotation taken at a pause comes back to the pause`() = runTest {
+    fun `the place in the prayer survives a rotation`() = runTest {
         val savedStateHandle = SavedStateHandle(mapOf("prayerId" to prayer.id))
         val before = viewModel(savedStateHandle)
 
@@ -238,10 +213,7 @@ class SessionViewModelTest {
         }
 
         viewModel(savedStateHandle).loadedStates.test {
-            assertEquals(
-                prayer.movements[1].heading,
-                awaitItem().breathingPause?.nextMovementHeading,
-            )
+            assertEquals(prayer.movements[1].lines.single(), awaitItem().activeLine)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -279,7 +251,7 @@ class SessionViewModelTest {
         viewModel.loadedStates.test {
             skipItems(1)
 
-            val end = viewModel.advance(6)
+            val end = viewModel.advance(4)
 
             assertTrue(end.isAtEnd)
             assertNull(end.autoAdvanceAfterMillis)

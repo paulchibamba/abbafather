@@ -26,8 +26,9 @@ data class Prayer(
     val attribution: String get() = provenance.shortAttribution
 
     /**
-     * Where the prayer rests. Every movement but the last ends in a pause, because a movement is a
-     * complete turn of the praying and the next one begins something new.
+     * Where the prayer rests, as the reader is shown it: every movement but the last ends in a
+     * pause, because a movement is a complete turn of the praying and the next one begins something
+     * new. The reader marks these; the session prays straight through them.
      */
     val breathingPauseLineIndices: Set<Int> =
         movements.dropLast(1).mapTo(mutableSetOf()) { it.firstLineIndex + it.lines.lastIndex }
