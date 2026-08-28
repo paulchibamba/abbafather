@@ -29,7 +29,7 @@ you love; write your own prayers. No accounts, no network, no notifications.
 | 12 | My prayers screen | `feat/12-my-prayers-screen` | merged, `task-12` |
 | 13 | Compose prayer screen | `feat/13-compose-prayer-screen` | merged, `task-13` |
 | 14 | Polish and hardening — incl. About and attribution | `feat/14-polish-and-hardening` | merged, `task-14` |
-| 15 | Session lyric flow — the whole prayer, active line centred | `feat/15-session-lyric-flow` | done in this branch, awaiting approval |
+| 15 | Session lyric flow — the whole prayer, prayed straight through | `feat/15-session-lyric-flow` | merged, `task-15` |
 | 16 | Scripture text — YouVersion SDK, reader's chosen version | `feat/16-scripture-text` | not started |
 
 **The board was renumbered on 2026-08-26**, when `docs/prayers/` arrived with the real catalogue. The
@@ -38,7 +38,7 @@ old tasks 8–12 became 10–14; tasks 8 and 9 are new. See `docs/DECISIONS.md` 
 Each task is built on its own branch, verified, then **stopped for approval**. Only after approval:
 `git switch main && git merge --no-ff <branch> && git tag task-<nn>`.
 
-## Task 15 — done in this branch
+## Task 15 — done and merged
 
 The session became one lyric column, prayed straight through: the whole prayer at once, the line
 being prayed held on the centre of the screen, and no rests between movements.
